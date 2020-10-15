@@ -5,11 +5,12 @@ class Medicion {
   static const colPadron = 'padron';
   static const colMedidor = 'medidor';
   static const colLectura = 'lectura';
+  static const colFecha = 'Fecha';
   static const colDomicilio = 'domicilio';
   static const colUltima = 'ultima';
   static const colInspector = 'inspector';
 
-  Medicion({this.id, this.periodo, this.padron, this.medidor, this.lectura, this.domicilio, this.ultima, this.inspector});
+  Medicion({this.id, this.periodo, this.padron, this.medidor, this.lectura, this.fecha, this.domicilio, this.ultima, this.inspector});
 
   Medicion.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -17,6 +18,7 @@ class Medicion {
     padron = json['padron'];
     medidor = json['medidor'];
     lectura = json['lectura'];
+    fecha = json['fecha'];
     domicilio = json['domicilio'];
     ultima = json['ultima_lectura'];
     inspector = json['inspector'];
@@ -28,6 +30,7 @@ class Medicion {
     padron = map[colPadron];
     medidor = map[colMedidor];
     lectura = map[colLectura];
+    fecha = map[colFecha];
     domicilio = map[colDomicilio];
     ultima = map[colUltima];
     inspector = map[colInspector];
@@ -38,6 +41,7 @@ class Medicion {
   String padron;
   String medidor;
   int lectura;
+  DateTime fecha;
   String domicilio;
   int ultima;
   int inspector;
@@ -49,6 +53,7 @@ class Medicion {
         'padron': padron,
         'medidor': medidor,
         'lectura': lectura,
+        'fecha': fecha,
         'domicilio': domicilio,
         'ultima': ultima,
         'inspector': inspector,

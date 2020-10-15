@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:alvear/Config.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:alvear/models/medicion.dart';
@@ -48,13 +49,6 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _dbHelper = DatabaseHelper.instance;
     });
-    // _buscaMediciones().then((value) {
-    //   setState(() {
-    //     _mediciones.addAll(value);
-    //   });
-    // });
-    _buscaMediciones();
-    _refrescarMedicionesList();
   }
 
   @override
@@ -67,16 +61,39 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Text(widget.title,
             style: TextStyle(color: Colors.green[400]),),
         ),
+        actions: <Widget>[
+          PopupMenuButton(
+            onSelected: OpcionSeleccionada,
+              itemBuilder: (BuildContext context){
+                return Configuracion.choices.map((String choice) {
+                  return PopupMenuItem<String>(
+                      value: choice,
+                      child: Text(choice));
+                }).toList();
+              })
+        ],
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _list(), _form()
+            _list()//, _form()
           ],
         ),
       ),
     );
+
+  }
+
+  void OpcionSeleccionada(String choice) {
+    if (choice == Configuracion.Sincronizar) {
+      print("Sinconizarrrrr");
+    } else if (choice == Configuracion.LogIn) {
+      _buscaMediciones();
+      _refrescarMedicionesList();
+    }
+
+
   }
 
   _form() => Container(
@@ -146,7 +163,6 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future _buscaMediciones() async {
-    print("que onda wey?");
     var url = 'http://192.168.1.32:88/expediente/devuelve_json/';
     var response = await http.get(url);
 
@@ -155,12 +171,7 @@ class _MyHomePageState extends State<MyHomePage> {
       // var medicionesJson = jsonDecode(response.body);
       Map<String, dynamic> map = json.decode(response.body);
       List<dynamic> data = map["json"];
-      print(data);
-      print("entro al for");
       for (var medicion in data) {
-        // for (var medicion in medicionesJson) {
-        print("adentruski");
-        print(medicion);
         mediciones.add(Medicion.fromMap(medicion));
       }
       setState(() {
