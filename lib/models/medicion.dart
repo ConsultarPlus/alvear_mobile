@@ -41,7 +41,7 @@ class Medicion {
   String padron;
   String medidor;
   int lectura;
-  DateTime fecha;
+  String fecha;
   String domicilio;
   int ultima;
   int inspector;

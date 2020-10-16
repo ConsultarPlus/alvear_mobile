@@ -14,7 +14,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Comuna Alvear - Mediciones',
+      title: 'Comuna Alvear - Lecturas',
       theme: ThemeData(
         primaryColor: Colors.green.shade800,
         visualDensity: VisualDensity.adaptivePlatformDensity,
@@ -82,18 +82,18 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
       ),
     );
-
   }
 
   void OpcionSeleccionada(String choice) {
     if (choice == Configuracion.Sincronizar) {
       print("Sinconizarrrrr");
-    } else if (choice == Configuracion.LogIn) {
+    } else if (choice == Configuracion.Descargar) {
+      _LimpiaBase();
       _buscaMediciones();
+      // _refrescarMedicionesList();
+    } else if (choice == Configuracion.Actualizar) {
       _refrescarMedicionesList();
     }
-
-
   }
 
   _form() => Container(
@@ -104,20 +104,23 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
             children: <Widget>[
               TextFormField(
+                readOnly: true,
                 controller: _ctrlDomicilio,
                 decoration: InputDecoration(labelText: 'Domicilio'),
                 onSaved: (val) => setState(()=>_medicion.domicilio = val),
-                validator: (val)=>(val.length == 0 ? 'Debe cargar el domicilio':null),
+                // validator: (val)=>(val.length == 0 ? 'Debe cargar el domicilio':null),
               ),
               TextFormField(
+                readOnly: true,
                 controller: _ctrlMedidor,
                 decoration: InputDecoration(labelText: 'N° Medidor'),
                 onSaved: (val) => setState(()=>_medicion.medidor = val),
-                validator: (val)=>(val.length == 0 ? 'Debe cargar el medidor':null),
+                // validator: (val)=>(val.length == 0 ? 'Debe cargar el medidor':null),
               ),
               TextFormField(
                 controller: _ctrlLectura,
                 decoration: InputDecoration(labelText: 'Lectura'),
+                autofocus: true,
                 onSaved: (val) => setState(()=>_medicion.lectura = int.parse(val)),
                 validator: (val)=>(val.length>6 ?'Cuuidado, muy alto!':null),
               ),
@@ -140,16 +143,25 @@ class _MyHomePageState extends State<MyHomePage> {
       });
     }
 
+  _insertaDescargado(Medicion medicion) async{
+    await _dbHelper.insertJson(medicion);
+  }
+
   _onSumbit() async{
     var form = _formKey.currentState;
     if (form.validate()) {
       form.save();
+      //print(_medicion.id);
       if (_medicion.id==null) await _dbHelper.insertMedicion(_medicion);
       else await _dbHelper.updateMedicion(_medicion);
-      _refrescarMedicionesList();
+      // _refrescarMedicionesList();
       _resetForm();
-      print(_medicion.lectura);
+      // print(_medicion.lectura);
     }
+  }
+
+  _LimpiaBase() async {
+   await _dbHelper.deleteBase();
   }
 
   _resetForm() {
@@ -163,21 +175,61 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future _buscaMediciones() async {
-    var url = 'http://192.168.1.32:88/expediente/devuelve_json/';
-    var response = await http.get(url);
+    //var url = 'http://192.168.1.32:88/expediente/devuelve_json/';
+    var id;
+    var periodo;
+    var padron;
+    var medidor;
+    var lectura;
+    var fecha;
+    var domicilio;
+    var ultima;
+    var inspector;
+
+    var url = 'http://190.193.200.120:88/expediente/devuelve_json/';
+    var jsonData = await http.get(url);
 
     var mediciones = List<Medicion>();
-    if (response.statusCode == 200) {
-      // var medicionesJson = jsonDecode(response.body);
-      Map<String, dynamic> map = json.decode(response.body);
-      List<dynamic> data = map["json"];
-      for (var medicion in data) {
+    if (jsonData.statusCode == 200) {
+
+      Map<String, dynamic> map = json.decode(jsonData.body);
+      List<dynamic> listaMediciones = map["json"];
+      // print("estpy ava");
+      // List mediciones = json.decode(jsonData.body);
+
+      // print(listaMediciones);
+      // List<Medicion> listaMediciones = mediciones.map((map) => Medicion.fromJson(map)).toList();
+      for (var medicion in listaMediciones) {
+        // print(medicion);
         mediciones.add(Medicion.fromMap(medicion));
+        // id = medicion.id;
+        // periodo = medicion.periodo;
+        // padron = medicion.padron;
+        // medidor = medicion.medidor;
+        // lectura = medicion.lectura;
+        // fecha = medicion.fecha;
+        // domicilio = medicion.domicilio;
+        // ultima = medicion.ultima;
+        // inspector = medicion.inspector;
+        // print('El id es $id y la calle es $domicilio');
+
+        // Medicion _medicionObject = Medicion(id: id,
+        //     periodo = periodo,
+        //     padron = padron,
+        //     medidor = medidor,
+        //     lectura = lectura,
+        //     fecha = fecha,
+        //     domicilio = domicilio,
+        //     ultima = ultima,
+        //     inspector = inspector
+        //     )
+        // _insertaDescargado(medicion);
       }
+      // Grabo en la List View
       setState(() {
         _mediciones = mediciones;
       });
-      await _dbHelper.insertMedicion(_medicion);
+
     }
   }
 
@@ -190,7 +242,8 @@ class _MyHomePageState extends State<MyHomePage> {
           return Column(
             children: <Widget>[
               ListTile(
-                title: Text(_mediciones[index].domicilio+' - ('+_mediciones[index].medidor+') - '+_mediciones[index].lectura.toString()),
+                title: Text('('+_mediciones[index].padron+') '+_mediciones[index].domicilio),
+                leading: Icon(Icons.home),
                 onTap: () {
                   setState(() {
                     _medicion = _mediciones[index];
@@ -200,6 +253,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   });
                 },
               ),
+              Text('Medidor: '+_mediciones[index].medidor,textScaleFactor: 0.9),
+              Text('Lectura: '+_mediciones[index].lectura.toString(),textScaleFactor: 0.9),
               Divider(
                 height: 5.0,
               )

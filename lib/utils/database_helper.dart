@@ -34,12 +34,19 @@ class DatabaseHelper{
         ${Medicion.colPadron} TEXT NULL,
         ${Medicion.colMedidor} TEXT NULL,
         ${Medicion.colLectura} INTEGER NULL,
-        ${Medicion.colFecha} DATETIME NULL,
+        ${Medicion.colFecha} TEXT NULL,
         ${Medicion.colDomicilio} TEXT NULL,
         ${Medicion.colUltima} INTEGER NULL,
         ${Medicion.colInspector} INTEGER NULL
         )  
     ''');
+  }
+
+  Future<void> insertJson(Medicion medicion) async{
+    // var database =  _database;
+    Database db = await database;
+    await db.insert(Medicion.tblMedicion, medicion.toJson(), conflictAlgorithm:
+    ConflictAlgorithm.replace);
   }
 
   Future<int> insertMedicion(Medicion medicion) async {
@@ -53,9 +60,19 @@ class DatabaseHelper{
     where: '${Medicion.colId}=?',whereArgs: [medicion.id]);
   }
 
+  Future<int> deleteBase() async {
+    Database db = await database;
+    await db.execute('''
+    DELETE FROM  ${Medicion.tblMedicion}
+    ''');
+  }
+
   Future<List<Medicion>> mostrarMediciones() async{
-    Database db = await database ;
+    Database db = await database;
     List<Map> mediciones =await db.query(Medicion.tblMedicion);
+    print(mediciones.length);
+    print("bate papo");
+    print(mediciones[0]);
     return mediciones.length == 0
     ?[]
     :mediciones.map((e) => Medicion.fromMap(e)).toList();
