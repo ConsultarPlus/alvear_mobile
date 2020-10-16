@@ -43,7 +43,6 @@ class DatabaseHelper{
   }
 
   Future<void> insertJson(Medicion medicion) async{
-    // var database =  _database;
     Database db = await database;
     await db.insert(Medicion.tblMedicion, medicion.toJson(), conflictAlgorithm:
     ConflictAlgorithm.replace);
@@ -53,6 +52,13 @@ class DatabaseHelper{
     Database db = await database;
     return await db.insert(Medicion.tblMedicion, medicion.toMap());
   }
+
+  // Future<int> addItem(MemoModel item) async{ //returns number of items inserted as an integer
+  //   final db = await init(); //open database
+  //   return db.insert("Memos", item.toMap(), //toMap() function from MemoModel
+  //     conflictAlgorithm: ConflictAlgorithm.ignore, //ignores conflicts due to duplicate entries
+  //   );
+  // }
 
   Future<int> updateMedicion(Medicion medicion) async {
     Database db = await database;
@@ -70,9 +76,6 @@ class DatabaseHelper{
   Future<List<Medicion>> mostrarMediciones() async{
     Database db = await database;
     List<Map> mediciones =await db.query(Medicion.tblMedicion);
-    print(mediciones.length);
-    print("bate papo");
-    print(mediciones[0]);
     return mediciones.length == 0
     ?[]
     :mediciones.map((e) => Medicion.fromMap(e)).toList();

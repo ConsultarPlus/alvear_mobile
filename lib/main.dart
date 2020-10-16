@@ -77,7 +77,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _list()//, _form()
+            _list(), _form()
           ],
         ),
       ),
@@ -90,7 +90,6 @@ class _MyHomePageState extends State<MyHomePage> {
     } else if (choice == Configuracion.Descargar) {
       _LimpiaBase();
       _buscaMediciones();
-      // _refrescarMedicionesList();
     } else if (choice == Configuracion.Actualizar) {
       _refrescarMedicionesList();
     }
@@ -99,6 +98,7 @@ class _MyHomePageState extends State<MyHomePage> {
   _form() => Container(
       color: Colors.white,
       padding: EdgeInsets.symmetric(vertical:15, horizontal: 30),
+      // height: altura,
       child: Form(
         key: _formKey,
         child: Column(
@@ -136,12 +136,12 @@ class _MyHomePageState extends State<MyHomePage> {
       )
     );
 
-    _refrescarMedicionesList() async{
-      List<Medicion> x = await _dbHelper.mostrarMediciones();
-      setState(() {
-        _mediciones = x;
-      });
-    }
+  _refrescarMedicionesList() async{
+    List<Medicion> x = await _dbHelper.mostrarMediciones();
+    setState(() {
+      _mediciones = x;
+    });
+  }
 
   _insertaDescargado(Medicion medicion) async{
     await _dbHelper.insertJson(medicion);
@@ -151,12 +151,10 @@ class _MyHomePageState extends State<MyHomePage> {
     var form = _formKey.currentState;
     if (form.validate()) {
       form.save();
-      //print(_medicion.id);
       if (_medicion.id==null) await _dbHelper.insertMedicion(_medicion);
       else await _dbHelper.updateMedicion(_medicion);
-      // _refrescarMedicionesList();
+      _refrescarMedicionesList();
       _resetForm();
-      // print(_medicion.lectura);
     }
   }
 
@@ -175,61 +173,33 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future _buscaMediciones() async {
-    //var url = 'http://192.168.1.32:88/expediente/devuelve_json/';
-    var id;
-    var periodo;
-    var padron;
-    var medidor;
-    var lectura;
-    var fecha;
-    var domicilio;
-    var ultima;
-    var inspector;
-
-    var url = 'http://190.193.200.120:88/expediente/devuelve_json/';
+    var url = 'http://192.168.1.32:88/expediente/devuelve_json/';
+    // var url = 'http://190.193.200.120:88/expediente/devuelve_json/';
     var jsonData = await http.get(url);
-
-    var mediciones = List<Medicion>();
     if (jsonData.statusCode == 200) {
-
-      Map<String, dynamic> map = json.decode(jsonData.body);
-      List<dynamic> listaMediciones = map["json"];
-      // print("estpy ava");
-      // List mediciones = json.decode(jsonData.body);
-
-      // print(listaMediciones);
-      // List<Medicion> listaMediciones = mediciones.map((map) => Medicion.fromJson(map)).toList();
+      // Map<String, dynamic> map = json.decode(jsonData.body);
+      // List<dynamic> listaMediciones = map["json"];
+      List mediciones = json.decode(jsonData.body);
+      List<Medicion> listaMediciones = mediciones.map((map) => Medicion.fromJson(map)).toList();
       for (var medicion in listaMediciones) {
-        // print(medicion);
-        mediciones.add(Medicion.fromMap(medicion));
-        // id = medicion.id;
-        // periodo = medicion.periodo;
-        // padron = medicion.padron;
-        // medidor = medicion.medidor;
-        // lectura = medicion.lectura;
-        // fecha = medicion.fecha;
-        // domicilio = medicion.domicilio;
-        // ultima = medicion.ultima;
-        // inspector = medicion.inspector;
-        // print('El id es $id y la calle es $domicilio');
-
-        // Medicion _medicionObject = Medicion(id: id,
-        //     periodo = periodo,
-        //     padron = padron,
-        //     medidor = medidor,
-        //     lectura = lectura,
-        //     fecha = fecha,
-        //     domicilio = domicilio,
-        //     ultima = ultima,
-        //     inspector = inspector
-        //     )
-        // _insertaDescargado(medicion);
+        // mediciones.add(Medicion.fromMap(medicion));
+        Medicion _medicionObject = Medicion(
+            id: medicion.id,
+            periodo: medicion.periodo,
+            padron: medicion.padron,
+            medidor: medicion.medidor,
+            domicilio: medicion.domicilio,
+            ultima: medicion.ultima,
+            inspector: medicion.inspector
+        );
+        // Grabo en la base de datos
+         _insertaDescargado(_medicionObject);
       }
-      // Grabo en la List View
+      // Muestro en la List View
+      List<Medicion> x = await _dbHelper.mostrarMediciones();
       setState(() {
-        _mediciones = mediciones;
+        _mediciones = x;
       });
-
     }
   }
 
