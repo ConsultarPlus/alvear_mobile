@@ -129,6 +129,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 TextFormField(
                   controller: _ctrlLectura,
                   decoration: InputDecoration(labelText: 'Lectura'),
+                  keyboardType: TextInputType.number,
                   autofocus: true,
                   onSaved: (val) => setState(()=>_medicion.lectura = int.parse(val)),
                   validator: (val)=>(val.length>6 ?'Cuuidado, muy alto!':null),
