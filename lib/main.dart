@@ -51,7 +51,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final _ctrlMedidor = TextEditingController();
   final _ctrlLectura = TextEditingController();
   final _ctrlDomicilio = TextEditingController();
-
+  bool _mostrarForm = true;
   @override
   void initState(){
     super.initState();
@@ -63,7 +63,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Colors.grey[200],
       appBar: AppBar(
@@ -87,7 +86,11 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _list(), _form()
+            _list(),
+            Visibility(
+              visible: _mostrarForm,
+              child: _form(),
+            ),
           ],
         ),
       ),
@@ -110,6 +113,7 @@ class _MyHomePageState extends State<MyHomePage> {
       padding: EdgeInsets.symmetric(vertical:15, horizontal: 30),
       child: Form(
         key: _formKey,
+
           child: Column(
               children: <Widget>[
                 TextFormField(
@@ -132,7 +136,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   keyboardType: TextInputType.number,
                   autofocus: true,
                   onSaved: (val) => setState(()=>_medicion.lectura = int.parse(val)),
-                  validator: (val)=>(val.length>6 ?'Cuuidado, muy alto!':null),
+                  validator: (val)=>(val.length>6 ?'Cuidado, muy alto!':null),
                 ),
                 Container(
                   margin: EdgeInsets.all(10.0),
@@ -143,6 +147,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   )
               ],
           ),
+
       )
     );
 
@@ -179,6 +184,7 @@ class _MyHomePageState extends State<MyHomePage> {
         _ctrlLectura.clear();
         _ctrlMedidor.clear();
         _medicion.id = null;
+        _mostrarForm = false;
       });
   }
 
@@ -241,18 +247,25 @@ class _MyHomePageState extends State<MyHomePage> {
             children: <Widget>[
               ListTile(
                 title: Text('('+_mediciones[index].padron+') '+_mediciones[index].domicilio),
+                subtitle: Text(
+                    'Medidor: '+_mediciones[index].medidor + ' Lectura: '+_mediciones[index].lectura.toString()
+                ),
                 leading: Icon(Icons.home),
                 onTap: () {
                   setState(() {
                     _medicion = _mediciones[index];
                     _ctrlMedidor.text = _mediciones[index].medidor;
-                    _ctrlLectura.text = _mediciones[index].lectura.toString();
+                    if (_mediciones[index].lectura.toString() == 'null')
+                      _ctrlLectura.text = '' ;
+                    else
+                      _ctrlLectura.text = _mediciones[index].lectura.toString() ;
                     _ctrlDomicilio.text = _mediciones[index].domicilio;
+                    _mostrarForm = !_mostrarForm;
                   });
                 },
               ),
-              Text('Medidor: '+_mediciones[index].medidor,textScaleFactor: 0.9),
-              Text('Lectura: '+_mediciones[index].lectura.toString(),textScaleFactor: 0.9),
+              // Text('Medidor: '+_mediciones[index].medidor,textScaleFactor: 0.9),
+              // Text('Lectura: '+_mediciones[index].lectura.toString(),textScaleFactor: 0.9),
               Divider(
                 height: 5.0,
               )
