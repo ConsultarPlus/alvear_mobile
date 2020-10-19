@@ -46,18 +46,20 @@ class Medicion {
   int ultima;
   int inspector;
 
-  Map<String, dynamic> toJson() =>
-      {
-        'id': id,
-        'periodo': periodo,
-        'padron': padron,
-        'medidor': medidor,
-        'lectura': lectura,
-        'fecha': fecha,
-        'domicilio': domicilio,
-        'ultima': ultima,
-        'inspector': inspector,
-      };
+  Map<String, dynamic> toJson() {
+    final json =<String, dynamic>{};
+    json['id'] = this.id;
+    json['periodo'] = this.periodo;
+    json['padron'] = this.padron;
+    json['medidor'] = this.medidor;
+    json['lectura'] = this.lectura;
+    json['fecha'] = this.fecha;
+    json['domicilio'] = this.domicilio;
+    json['ultima'] = this.ultima;
+    json['inspector'] = this.inspector;
+    return json;
+  }
+
 
   Map<String, dynamic> toMap() {
     var map = <String, dynamic>{colMedidor: medidor, colLectura: lectura, colDomicilio: domicilio};

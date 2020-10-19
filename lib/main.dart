@@ -58,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
     setState(() {
       _dbHelper = DatabaseHelper.instance;
     });
+    _refrescarMedicionesList();
   }
 
   @override
@@ -95,7 +96,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void OpcionSeleccionada(String choice) {
     if (choice == Configuracion.Sincronizar) {
-      print("Sinconizarrrrr");
+      _sincronizar();
     } else if (choice == Configuracion.Descargar) {
       _LimpiaBase();
       _buscaMediciones();
@@ -196,6 +197,7 @@ class _MyHomePageState extends State<MyHomePage> {
             periodo: medicion.periodo,
             padron: medicion.padron,
             medidor: medicion.medidor,
+            lectura: 0,
             domicilio: medicion.domicilio,
             ultima: medicion.ultima,
             inspector: medicion.inspector
@@ -209,6 +211,23 @@ class _MyHomePageState extends State<MyHomePage> {
         _mediciones = x;
       });
     }
+  }
+
+  Future<http.Response> _sincronizar() async{
+    List<Medicion> medicionesList = await _dbHelper.mostrarMediciones();
+    // String medicionesJson = json.encode(medicionesList);
+    var url = 'http://127.0.0.1:8000/inspecciones/json_inspector/';
+    // var url = 'http://192.168.1.32:88/expediente/sincroniza_json/';
+    // var url = 'http://190.193.200.120:88/expediente/sincroniza_json/';
+    var body = json.encode(medicionesList);
+    print('body: '+ body);
+
+    var response = await http.post(url, headers: {'Content-Type': "application/json"}, body: body);
+      print("Response status: ${response.statusCode}");
+      print("Response body: ${response.contentLength}");
+      print(response.headers);
+      print(response.request);
+    return response;
   }
 
   _list() => Expanded(
@@ -243,4 +262,38 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     ),
   );
+}
+
+class CargaLectura extends StatelessWidget {
+
+  final String itemHolder ;
+
+  CargaLectura({Key key, @required this.itemHolder}) : super(key: key);
+
+  goBack(BuildContext context){
+    Navigator.pop(context);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: Text("Second Activity Screen"),
+        ),
+        body: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              Center(child:
+              Text('Selected Item = ' + itemHolder,
+                style: TextStyle(fontSize: 22),
+                textAlign: TextAlign.center,)),
+
+              RaisedButton(
+                onPressed: () {goBack(context);},
+                color: Colors.lightBlue,
+                textColor: Colors.white,
+                child: Text('Go Back To Previous Screen'),
+              )])
+    );
+  }
 }
