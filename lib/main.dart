@@ -4,6 +4,15 @@ import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:alvear/models/medicion.dart';
 import 'package:alvear/utils/database_helper.dart';
+// Para el ícono
+import 'package:flutter_launcher_icons/android.dart';
+import 'package:flutter_launcher_icons/constants.dart';
+import 'package:flutter_launcher_icons/custom_exceptions.dart';
+import 'package:flutter_launcher_icons/ios.dart';
+import 'package:flutter_launcher_icons/main.dart';
+import 'package:flutter_launcher_icons/utils.dart';
+import 'package:flutter_launcher_icons/xml_templates.dart';
+
 
 void main() {
   runApp(MyApp());
@@ -98,41 +107,40 @@ class _MyHomePageState extends State<MyHomePage> {
   _form() => Container(
       color: Colors.white,
       padding: EdgeInsets.symmetric(vertical:15, horizontal: 30),
-      // height: altura,
       child: Form(
         key: _formKey,
-        child: Column(
-            children: <Widget>[
-              TextFormField(
-                readOnly: true,
-                controller: _ctrlDomicilio,
-                decoration: InputDecoration(labelText: 'Domicilio'),
-                onSaved: (val) => setState(()=>_medicion.domicilio = val),
-                // validator: (val)=>(val.length == 0 ? 'Debe cargar el domicilio':null),
-              ),
-              TextFormField(
-                readOnly: true,
-                controller: _ctrlMedidor,
-                decoration: InputDecoration(labelText: 'N° Medidor'),
-                onSaved: (val) => setState(()=>_medicion.medidor = val),
-                // validator: (val)=>(val.length == 0 ? 'Debe cargar el medidor':null),
-              ),
-              TextFormField(
-                controller: _ctrlLectura,
-                decoration: InputDecoration(labelText: 'Lectura'),
-                autofocus: true,
-                onSaved: (val) => setState(()=>_medicion.lectura = int.parse(val)),
-                validator: (val)=>(val.length>6 ?'Cuuidado, muy alto!':null),
-              ),
-              Container(
-                margin: EdgeInsets.all(10.0),
-                child: RaisedButton(
-                  onPressed: ()=> _onSumbit(),
-                  child: Text('Grabar Lectura'),
+          child: Column(
+              children: <Widget>[
+                TextFormField(
+                  readOnly: true,
+                  controller: _ctrlDomicilio,
+                  decoration: InputDecoration(labelText: 'Domicilio'),
+                  onSaved: (val) => setState(()=>_medicion.domicilio = val),
+                  // validator: (val)=>(val.length == 0 ? 'Debe cargar el domicilio':null),
                 ),
-              )
-            ],
-        ),
+                TextFormField(
+                  readOnly: true,
+                  controller: _ctrlMedidor,
+                  decoration: InputDecoration(labelText: 'N° Medidor'),
+                  onSaved: (val) => setState(()=>_medicion.medidor = val),
+                  // validator: (val)=>(val.length == 0 ? 'Debe cargar el medidor':null),
+                ),
+                TextFormField(
+                  controller: _ctrlLectura,
+                  decoration: InputDecoration(labelText: 'Lectura'),
+                  autofocus: true,
+                  onSaved: (val) => setState(()=>_medicion.lectura = int.parse(val)),
+                  validator: (val)=>(val.length>6 ?'Cuuidado, muy alto!':null),
+                ),
+                Container(
+                  margin: EdgeInsets.all(10.0),
+                    child: RaisedButton(
+                      onPressed: ()=> _onSumbit(),
+                      child: Text('Grabar Lectura'),
+                    ),
+                  )
+              ],
+          ),
       )
     );
 
