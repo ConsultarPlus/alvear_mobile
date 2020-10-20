@@ -53,13 +53,6 @@ class DatabaseHelper{
     return await db.insert(Medicion.tblMedicion, medicion.toMap());
   }
 
-  // Future<int> addItem(MemoModel item) async{ //returns number of items inserted as an integer
-  //   final db = await init(); //open database
-  //   return db.insert("Memos", item.toMap(), //toMap() function from MemoModel
-  //     conflictAlgorithm: ConflictAlgorithm.ignore, //ignores conflicts due to duplicate entries
-  //   );
-  // }
-
   Future<int> updateMedicion(Medicion medicion) async {
     Database db = await database;
     return await db.update(Medicion.tblMedicion, medicion.toMap(),
@@ -79,5 +72,15 @@ class DatabaseHelper{
     return mediciones.length == 0
     ?[]
     :mediciones.map((e) => Medicion.fromMap(e)).toList();
+  }
+
+  Future<List<Medicion>> lecturasCargadas() async{
+    Database db = await database;
+    int lect1 = 0;
+    int lect2;
+    List<Map> mediciones =await db.query(Medicion.tblMedicion,where: '${Medicion.colLectura}!=?', whereArgs: [lect1]);
+    return mediciones.length == 0
+        ?[]
+        :mediciones.map((e) => Medicion.fromMap(e)).toList();
   }
 }
