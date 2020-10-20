@@ -53,13 +53,6 @@ class DatabaseHelper{
     return await db.insert(Medicion.tblMedicion, medicion.toMap());
   }
 
-  // Future<int> addItem(MemoModel item) async{ //returns number of items inserted as an integer
-  //   final db = await init(); //open database
-  //   return db.insert("Memos", item.toMap(), //toMap() function from MemoModel
-  //     conflictAlgorithm: ConflictAlgorithm.ignore, //ignores conflicts due to duplicate entries
-  //   );
-  // }
-
   Future<int> updateMedicion(Medicion medicion) async {
     Database db = await database;
     return await db.update(Medicion.tblMedicion, medicion.toMap(),
