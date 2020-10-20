@@ -237,6 +237,7 @@ class _MyHomePageState extends State<MyHomePage> {
     return response;
   }
 
+
   _list() => Expanded(
     child: Card(
       margin: EdgeInsets.fromLTRB(20, 30, 20, 0),
@@ -245,12 +246,14 @@ class _MyHomePageState extends State<MyHomePage> {
         itemBuilder: (context,index){
           return Column(
             children: <Widget>[
-              ListTile(
+             ListTile(
                 title: Text('('+_mediciones[index].padron+') '+_mediciones[index].domicilio),
                 subtitle: Text(
                     'Medidor: '+_mediciones[index].medidor + ' Lectura: '+_mediciones[index].lectura.toString()
                 ),
-                leading: Icon(Icons.home),
+                leading: Icon(Icons.home,
+                              color: _mediciones[index].lectura.toString() == '0'?  Colors.grey[600] : Colors.greenAccent,
+                         ),
                 onTap: () {
                   setState(() {
                     _medicion = _mediciones[index];
