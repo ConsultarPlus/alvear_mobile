@@ -1,19 +1,9 @@
 import 'dart:convert';
-import 'dart:ffi';
 import 'package:alvear/Config.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
 import 'package:alvear/models/medicion.dart';
 import 'package:alvear/utils/database_helper.dart';
-// Para el ícono
-import 'package:flutter_launcher_icons/android.dart';
-import 'package:flutter_launcher_icons/constants.dart';
-import 'package:flutter_launcher_icons/custom_exceptions.dart';
-import 'package:flutter_launcher_icons/ios.dart';
-import 'package:flutter_launcher_icons/main.dart';
-import 'package:flutter_launcher_icons/utils.dart';
-import 'package:flutter_launcher_icons/xml_templates.dart';
-
 
 void main() {
   runApp(MyApp());
@@ -52,7 +42,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final _ctrlMedidor = TextEditingController();
   final _ctrlLectura = TextEditingController();
   final _ctrlDomicilio = TextEditingController();
-  bool _mostrarForm = true;
+  bool _mostrarForm = false;
   @override
   void initState(){
     super.initState();
@@ -102,6 +92,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (choice == Configuracion.Sincronizar) {
       _sincronizar();
     } else if (choice == Configuracion.Descargar) {
+      _sincronizar();
       _LimpiaBase();
       _buscaMediciones();
     } else if (choice == Configuracion.Actualizar) {
@@ -141,7 +132,7 @@ class _MyHomePageState extends State<MyHomePage> {
                  if (int.parse(val) < 0)
                    return 'La lectura debe ser mayor o igual a cero.';
                  else
-                   if (_medicion.ultima_lectura > _medicion.lectura)
+                   if (_medicion.ultima_lectura > int.parse(val))
                      return 'Debe ser mayor a la última lectura' + ' (' +
                          _medicion.ultima_lectura.toString() + ')';
                    else
@@ -228,7 +219,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<http.Response> _sincronizar() async{
-    List<Medicion> medicionesList = await _dbHelper.mostrarMediciones();
+    List<Medicion> medicionesList = await _dbHelper.lecturasCargadas();
     var url = 'http://10.0.2.2:8000/inspecciones/sincronizar_json/';
     var body = json.encode(medicionesList);
     print('body: '+ body);
@@ -252,7 +243,7 @@ class _MyHomePageState extends State<MyHomePage> {
              ListTile(
                 title: Text('('+_mediciones[index].padron+') '+_mediciones[index].domicilio),
                 subtitle: Text(
-                    'Medidor: '+_mediciones[index].medidor + ' Lectura: '+_mediciones[index].lectura.toString()
+                    'Medidor: '+_mediciones[index].medidor + ' Lectura: '+_mediciones[index].lectura.toString()+ ' Anterior: '+_mediciones[index].ultima_lectura.toString()
                 ),
                 leading: Icon(Icons.home,
                               color: _mediciones[index].lectura.toString() == '0'?  Colors.grey[600] : Colors.greenAccent,

@@ -73,4 +73,14 @@ class DatabaseHelper{
     ?[]
     :mediciones.map((e) => Medicion.fromMap(e)).toList();
   }
+
+  Future<List<Medicion>> lecturasCargadas() async{
+    Database db = await database;
+    int lect1 = 0;
+    int lect2;
+    List<Map> mediciones =await db.query(Medicion.tblMedicion,where: '${Medicion.colLectura}!=?', whereArgs: [lect1]);
+    return mediciones.length == 0
+        ?[]
+        :mediciones.map((e) => Medicion.fromMap(e)).toList();
+  }
 }
