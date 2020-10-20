@@ -15,8 +15,8 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-
 class _MyHomePageState extends State<MyHomePage> {
+
   Medicion _medicion = Medicion();
   List<Medicion> _mediciones =[];
   DatabaseHelper _dbHelper ;
@@ -74,6 +74,7 @@ class _MyHomePageState extends State<MyHomePage> {
     if (choice == Configuracion.Sincronizar) {
       _sincronizar();
     } else if (choice == Configuracion.Descargar) {
+      _sincronizar();
       _LimpiaBase();
       _buscaMediciones();
     } else if (choice == Configuracion.Actualizar) {
@@ -92,23 +93,33 @@ class _MyHomePageState extends State<MyHomePage> {
               readOnly: true,
               controller: _ctrlDomicilio,
               decoration: InputDecoration(labelText: 'Domicilio'),
-              onSaved: (val) => setState(()=>_medicion.domicilio = val),
-              // validator: (val)=>(val.length == 0 ? 'Debe cargar el domicilio':null),
             ),
             TextFormField(
               readOnly: true,
               controller: _ctrlMedidor,
               decoration: InputDecoration(labelText: 'N° Medidor'),
-              onSaved: (val) => setState(()=>_medicion.medidor = val),
-              // validator: (val)=>(val.length == 0 ? 'Debe cargar el medidor':null),
             ),
             TextFormField(
               controller: _ctrlLectura,
               decoration: InputDecoration(labelText: 'Lectura'),
               keyboardType: TextInputType.number,
               autofocus: true,
-              onSaved: (val) => setState(()=>_medicion.lectura = int.parse(val)),
-              validator: (val)=>(val.length>6 ?'Cuidado, muy alto!':null),
+              onSaved: (val) {
+                setState(() {
+                  _medicion.lectura = int.parse(val);
+                  _medicion.fecha_lectura = DateTime.now().toString();
+                });
+              },
+              validator: (val) {
+                if (int.parse(val) < 0)
+                  return 'La lectura debe ser mayor o igual a cero.';
+                else
+                if (_medicion.ultima_lectura > int.parse(val))
+                  return 'Debe ser mayor a la última lectura' + ' (' +
+                      _medicion.ultima_lectura.toString() + ')';
+                else
+                  return null;
+              },
             ),
             Container(
               margin: EdgeInsets.all(10.0),
@@ -119,7 +130,6 @@ class _MyHomePageState extends State<MyHomePage> {
             )
           ],
         ),
-
       )
   );
 
@@ -161,24 +171,22 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future _buscaMediciones() async {
-    var url = 'http://192.168.1.32:88/expediente/devuelve_json/';
+    var url = 'http://10.0.2.2:8000/inspecciones/descarga_json/';
     // var url = 'http://190.193.200.120:88/expediente/devuelve_json/';
     var jsonData = await http.get(url);
     if (jsonData.statusCode == 200) {
-      // Map<String, dynamic> map = json.decode(jsonData.body);
-      // List<dynamic> listaMediciones = map["json"];
       List mediciones = json.decode(jsonData.body);
       List<Medicion> listaMediciones = mediciones.map((map) => Medicion.fromJson(map)).toList();
       for (var medicion in listaMediciones) {
-        // mediciones.add(Medicion.fromMap(medicion));
         Medicion _medicionObject = Medicion(
             id: medicion.id,
             periodo: medicion.periodo,
             padron: medicion.padron,
             medidor: medicion.medidor,
-            lectura: 0,
+            lectura: null,
+            fecha_lectura: null,
             domicilio: medicion.domicilio,
-            ultima: medicion.ultima,
+            ultima_lectura: medicion.ultima_lectura,
             inspector: medicion.inspector
         );
         // Grabo en la base de datos
@@ -193,22 +201,18 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<http.Response> _sincronizar() async{
-    List<Medicion> medicionesList = await _dbHelper.mostrarMediciones();
-    // String medicionesJson = json.encode(medicionesList);
-    var url = 'http://127.0.0.1:8000/inspecciones/json_inspector/';
-    // var url = 'http://192.168.1.32:88/expediente/sincroniza_json/';
-    // var url = 'http://190.193.200.120:88/expediente/sincroniza_json/';
+    List<Medicion> medicionesList = await _dbHelper.lecturasCargadas();
+    var url = 'http://10.0.2.2:8000/inspecciones/sincronizar_json/';
     var body = json.encode(medicionesList);
     print('body: '+ body);
 
-    var response = await http.post(url, headers: {'Content-Type': "application/json"}, body: body);
+    var response = await http.post(url, headers: {'Content-Type': "application/json"}, body:   body);
     print("Response status: ${response.statusCode}");
     print("Response body: ${response.contentLength}");
     print(response.headers);
     print(response.request);
     return response;
   }
-
 
   _list() => Expanded(
     child: Card(
@@ -221,7 +225,7 @@ class _MyHomePageState extends State<MyHomePage> {
               ListTile(
                 title: Text('('+_mediciones[index].padron+') '+_mediciones[index].domicilio),
                 subtitle: Text(
-                    'Medidor: '+_mediciones[index].medidor + ' Lectura: '+_mediciones[index].lectura.toString()
+                    'Medidor: '+_mediciones[index].medidor + ' Lectura: '+_mediciones[index].lectura.toString()+ ' Anterior: '+_mediciones[index].ultima_lectura.toString()
                 ),
                 leading: Icon(Icons.home,
                   color: _mediciones[index].lectura.toString() == '0'?  Colors.grey[600] : Colors.greenAccent,
@@ -251,39 +255,4 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     ),
   );
-}
-
-
-class CargaLectura extends StatelessWidget {
-
-  final String itemHolder ;
-
-  CargaLectura({Key key, @required this.itemHolder}) : super(key: key);
-
-  goBack(BuildContext context){
-    Navigator.pop(context);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          title: Text("Second Activity Screen"),
-        ),
-        body: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Center(child:
-              Text('Selected Item = ' + itemHolder,
-                style: TextStyle(fontSize: 22),
-                textAlign: TextAlign.center,)),
-
-              RaisedButton(
-                onPressed: () {goBack(context);},
-                color: Colors.lightBlue,
-                textColor: Colors.white,
-                child: Text('Go Back To Previous Screen'),
-              )])
-    );
-  }
 }
