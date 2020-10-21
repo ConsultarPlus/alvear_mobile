@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
-
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:alvear/models/medicion.dart';
+import 'package:alvear/models/inspector.dart';
 
 class DatabaseHelper{
   static const _databaseName= 'Mediciones.db';

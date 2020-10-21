@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:alvear/utils/urls.dart';
 import 'package:flutter/material.dart';
 import 'package:alvear/models/medicion.dart';
 import 'package:alvear/utils/database_helper.dart';
@@ -183,8 +184,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future _buscaMediciones() async {
-    var url = 'http://10.0.2.2:8000/inspecciones/descarga_json/';
-    // var url = 'http://190.193.200.120:88/expediente/devuelve_json/';
+    var url = urlDescarga();
     var jsonData = await http.get(url);
     if (jsonData.statusCode == 200) {
       List mediciones = json.decode(jsonData.body);
@@ -214,7 +214,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<http.Response> _sincronizar() async{
     List<Medicion> medicionesList = await _dbHelper.lecturasCargadas();
-    var url = 'http://10.0.2.2:8000/inspecciones/sincronizar_json/';
+    var url = urlSincronizar();
     var body = json.encode(medicionesList);
     print('body: '+ body);
 
@@ -227,8 +227,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future _buscaInspectores() async {
-    var url = 'http://10.0.2.2:8000/inspecciones/inspectores_json/';
-    // var url = 'http://190.193.200.120:88/expediente/devuelve_json/';
+    var url = urlInspector();
     var jsonData = await http.get(url);
     if (jsonData.statusCode == 200) {
       List mediciones = json.decode(jsonData.body);

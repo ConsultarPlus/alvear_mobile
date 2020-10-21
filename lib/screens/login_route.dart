@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'lecturas_route.dart';
-import 'package:alvear/models/medicion.dart';
+import 'package:alvear/models/inspector.dart';
 import 'package:alvear/utils/database_helper.dart';
-import 'package:alvear/Config.dart';
+import 'package:alvear/utils/mensajes.dart';
+import 'package:alvear/utils/urls.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-//Inicio Mis basuras
 
 class LoginRoute extends StatefulWidget {
 
@@ -48,10 +48,13 @@ class _LoginRouteState extends State<LoginRoute> {
   }
 
   Future _verificaLog(Inspector _inspector) async {
-    var url = 'http://10.0.2.2:8000/inspecciones/inspectores_json/';
-    // var url = 'http://190.193.200.120:88/expediente/devuelve_json/';
+    var url = urlInspector();
+    auth = false;
+    //try {
     var jsonData = await http.get(url);
+    //var jsonData = await http.get(url);
     if (jsonData.statusCode == 200) {
+
       List inspectores = json.decode(jsonData.body);
       List<Inspector> listaInspectores = inspectores.map((map) => Inspector.fromJson(map)).toList();
       for (var inspector in listaInspectores) {
@@ -74,9 +77,10 @@ class _LoginRouteState extends State<LoginRoute> {
       if (auth==true){
         Navigator.push(context,
             MaterialPageRoute(builder: (context) => MyHomePage(title: 'Comuna Alvear - Lecturas')));
-      };
+      }
     }
-    if (auth==false){
+    if (auth!=true){
+      mensajeError(context, 'Error', 'DNI o pin incorrecto');
       print("El inspector o la clave no coinciden con los inspectores activos");
     }
   }
@@ -136,5 +140,3 @@ class _LoginRouteState extends State<LoginRoute> {
   }
 
 }
-
-//Fin Mis basuras
