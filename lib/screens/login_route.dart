@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'lecturas_route.dart';
 import 'package:alvear/models/inspector.dart';
@@ -41,7 +40,6 @@ class _LoginRouteState extends State<LoginRoute> {
       print("hay inspector ");
       Navigator.push(
           context,
-          //MaterialPageRoute(builder: (context) => SecondRoute()),
           MaterialPageRoute(builder: (context) => MyHomePage(title: 'Comuna Alvear - Lecturas')));
     } else {
       hayInspector = false;

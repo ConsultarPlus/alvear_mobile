@@ -36,37 +36,43 @@ class _MyHomePageState extends State<MyHomePage> {
     _refrescarMedicionesList();
   }
 
+  Future<bool> _onBackPressed() {
+    Navigator.pop(context, false);
+}
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[200],
-      appBar: AppBar(
-        title: Center(
-          child: Text(widget.title,
-            style: TextStyle(color: Colors.green[400]),),
-        ),
-        actions: <Widget>[
-          PopupMenuButton(
-              onSelected: OpcionSeleccionada,
-              itemBuilder: (BuildContext context){
-                return Configuracion.choices.map((String choice) {
-                  return PopupMenuItem<String>(
-                      value: choice,
-                      child: Text(choice));
-                }).toList();
-              })
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            _list(),
-            Visibility(
-              visible: _mostrarForm,
-              child: _form(),
-            ),
+    return WillPopScope(
+      onWillPop: _onBackPressed,
+      child: Scaffold(
+        backgroundColor: Colors.grey[200],
+        appBar: AppBar(
+          title: Center(
+            child: Text(widget.title,
+              style: TextStyle(color: Colors.green[400]),),
+          ),
+          actions: <Widget>[
+            PopupMenuButton(
+                onSelected: OpcionSeleccionada,
+                itemBuilder: (BuildContext context){
+                  return Configuracion.choices.map((String choice) {
+                    return PopupMenuItem<String>(
+                        value: choice,
+                        child: Text(choice));
+                  }).toList();
+                })
           ],
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              _list(),
+              Visibility(
+                visible: _mostrarForm,
+                child: _form(),
+              ),
+            ],
+          ),
         ),
       ),
     );
