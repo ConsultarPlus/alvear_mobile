@@ -17,37 +17,45 @@ mensajeNormal(BuildContext context, String titulo, String mensaje) {
 }
 
 showAlertDialog(BuildContext context, String tipo, String titulo, String mensaje) {
-
+  var colorto;
+  var colorto_texto;
+  switch(tipo) {
+    case 'error':{
+      colorto = Colors.red[100];
+      colorto_texto = Colors.red[900];
+    }
+    break;
+    case 'alerta':{
+      colorto = Colors.yellow[100];
+      colorto_texto = Colors.yellow[900];
+    }
+    break;
+    case 'exito':{
+      colorto = Colors.green[100];
+      colorto_texto = Colors.green[900];
+    }
+    break;
+    default: {
+      colorto = Colors.lightBlue[100];
+      colorto_texto = Colors.lightBlue[900];
+    }
+    break;
+  }
   // set up the button
   Widget okButton = FlatButton(
     child: Text("OK"),
+    textColor: colorto_texto,
     onPressed: () {
       Navigator.of(context).pop();
     },
   );
-  var colorto;
 
-  switch(tipo) {
-    case 'error':{
-      colorto = Colors.redAccent;
-    }
-    break;
-    case 'alerta':{
-      colorto = Colors.amberAccent;
-    }
-    break;
-    case 'exito':{
-      colorto = Colors.greenAccent;
-    }
-    break;
-    default: {
-      colorto = Colors.lightBlueAccent;
-    }
-      break;
-  }
   // set up the AlertDialog
   AlertDialog alert = AlertDialog(
-    title: Text(titulo),
+    title: Text(titulo,
+                style: TextStyle(fontStyle: FontStyle.italic,
+                                 color: colorto_texto),
+                ),
     content: Text(mensaje),
     backgroundColor: colorto,
     actions: [

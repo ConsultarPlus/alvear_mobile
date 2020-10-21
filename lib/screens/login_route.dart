@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'lecturas_route.dart';
 import 'package:alvear/models/inspector.dart';
@@ -49,39 +51,51 @@ class _LoginRouteState extends State<LoginRoute> {
 
   Future _verificaLog(Inspector _inspector) async {
     var url = urlInspector();
+    var ok = true;
+    var jsonData;
     auth = false;
-    //try {
-    var jsonData = await http.get(url);
-    //var jsonData = await http.get(url);
-    if (jsonData.statusCode == 200) {
-
-      List inspectores = json.decode(jsonData.body);
-      List<Inspector> listaInspectores = inspectores.map((map) => Inspector.fromJson(map)).toList();
-      for (var inspector in listaInspectores) {
-        Inspector _inspectorObject = Inspector(
+    try {
+      jsonData = await http.get(url).timeout(const Duration(seconds: 3));
+    } on TimeoutException catch (e) {
+      mensajeError(context, 'Error', 'Tiempo de espera agotado');
+      ok = false;
+    } on Error catch (e) {
+      mensajeError(context, 'Error', 'Ocurrió un error, intente más tarde');
+      ok = false;
+    }
+    if (ok == true) {
+      if (jsonData.statusCode == 200) {
+        List inspectores = json.decode(jsonData.body);
+        List<Inspector> listaInspectores = inspectores.map((map) =>
+            Inspector.fromJson(map)).toList();
+        for (var inspector in listaInspectores) {
+          Inspector _inspectorObject = Inspector(
             id: inspector.id,
             dni: inspector.dni,
             nombre: inspector.nombre,
             e_mail: inspector.e_mail,
             clave_app: inspector.clave_app,
-        );
-        // Grabo en la base de datos al inspector loggeado
-        if (inspector.dni == _inspector.dni){
-          if (inspector.clave_app == _inspector.clave_app){
-            await _dbHelper.insertInspector(_inspectorObject);
-            auth = true;
-            break;
+          );
+          // Grabo en la base de datos al inspector loggeado
+          if (inspector.dni == _inspector.dni) {
+            if (inspector.clave_app == _inspector.clave_app) {
+              await _dbHelper.insertInspector(_inspectorObject);
+              auth = true;
+              break;
+            }
           }
         }
+        if (auth == true) {
+          Navigator.push(context,
+              MaterialPageRoute(builder: (context) =>
+                  MyHomePage(title: 'Comuna Alvear - Lecturas')));
+        }
       }
-      if (auth==true){
-        Navigator.push(context,
-            MaterialPageRoute(builder: (context) => MyHomePage(title: 'Comuna Alvear - Lecturas')));
+      if (auth != true) {
+        mensajeError(context, 'Error', 'DNI o pin incorrecto');
+        print(
+            "El inspector o la clave no coinciden con los inspectores activos");
       }
-    }
-    if (auth!=true){
-      mensajeError(context, 'Error', 'DNI o pin incorrecto');
-      print("El inspector o la clave no coinciden con los inspectores activos");
     }
   }
 
