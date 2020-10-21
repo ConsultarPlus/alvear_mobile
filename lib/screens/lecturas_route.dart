@@ -4,6 +4,7 @@ import 'package:alvear/models/medicion.dart';
 import 'package:alvear/utils/database_helper.dart';
 import 'package:alvear/Config.dart';
 import 'package:http/http.dart' as http;
+import 'login_route.dart';
 
 
 class MyHomePage extends StatefulWidget {
@@ -79,7 +80,18 @@ class _MyHomePageState extends State<MyHomePage> {
       _buscaMediciones();
     } else if (choice == Configuracion.Actualizar) {
       _refrescarMedicionesList();
+    } else if (choice == Configuracion.LogOut) {
+      _cerrarSesion();
     }
+  }
+
+  _cerrarSesion()async {
+    await _dbHelper.logOut();
+    print("Inspector deslogueado");
+    Navigator.push(
+        context,
+        //MaterialPageRoute(builder: (context) => SecondRoute()),
+        MaterialPageRoute(builder: (context) => LoginRoute()));
   }
 
   _form() => Container(
@@ -214,6 +226,36 @@ class _MyHomePageState extends State<MyHomePage> {
     return response;
   }
 
+  Future _buscaInspectores() async {
+    var url = 'http://10.0.2.2:8000/inspecciones/inspectores_json/';
+    // var url = 'http://190.193.200.120:88/expediente/devuelve_json/';
+    var jsonData = await http.get(url);
+    if (jsonData.statusCode == 200) {
+      List mediciones = json.decode(jsonData.body);
+      List<Medicion> listaMediciones = mediciones.map((map) => Medicion.fromJson(map)).toList();
+      for (var medicion in listaMediciones) {
+        Medicion _medicionObject = Medicion(
+            id: medicion.id,
+            periodo: medicion.periodo,
+            padron: medicion.padron,
+            medidor: medicion.medidor,
+            lectura: null,
+            fecha_lectura: null,
+            domicilio: medicion.domicilio,
+            ultima_lectura: medicion.ultima_lectura,
+            inspector: medicion.inspector
+        );
+        // Grabo en la base de datos
+        _insertaDescargado(_medicionObject);
+      }
+      // Muestro en la List View
+      List<Medicion> x = await _dbHelper.mostrarMediciones();
+      setState(() {
+        _mediciones = x;
+      });
+    }
+  }
+
   _list() => Expanded(
     child: Card(
       margin: EdgeInsets.fromLTRB(20, 30, 20, 0),
@@ -238,8 +280,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       _ctrlLectura.text = '' ;
                     else
                       _ctrlLectura.text = _mediciones[index].lectura.toString() ;
-                    _ctrlDomicilio.text = _mediciones[index].domicilio;
-                    _mostrarForm = !_mostrarForm;
+                      _ctrlDomicilio.text = _mediciones[index].domicilio;
+                      _mostrarForm = !_mostrarForm;
                   });
                 },
               ),
