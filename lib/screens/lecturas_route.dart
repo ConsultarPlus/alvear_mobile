@@ -1,11 +1,14 @@
-import 'dart:convert';
-import 'package:alvear/utils/urls.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'login_route.dart';
+import 'package:alvear/models/inspector.dart';
 import 'package:alvear/models/medicion.dart';
 import 'package:alvear/utils/database_helper.dart';
-import 'package:alvear/Config.dart';
+import 'package:alvear/utils/mensajes.dart';
+import 'package:alvear/utils/urls.dart';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'login_route.dart';
+import 'package:alvear/Config.dart';
 
 
 class MyHomePage extends StatefulWidget {
@@ -27,12 +30,16 @@ class _MyHomePageState extends State<MyHomePage> {
   final _ctrlLectura = TextEditingController();
   final _ctrlDomicilio = TextEditingController();
   bool _mostrarForm = false;
+  var inspector_nombre;
+  var inspector_id;
+
   @override
   void initState(){
     super.initState();
     setState(() {
       _dbHelper = DatabaseHelper.instance;
     });
+    _traeInspectorLogeado();
     _refrescarMedicionesList();
   }
 
@@ -66,6 +73,7 @@ class _MyHomePageState extends State<MyHomePage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
+              Text("Inspector: $inspector_nombre", textScaleFactor: 1.3),
               _list(),
               Visibility(
                 visible: _mostrarForm,
@@ -81,25 +89,52 @@ class _MyHomePageState extends State<MyHomePage> {
   void OpcionSeleccionada(String choice) {
     if (choice == Configuracion.Sincronizar) {
       _sincronizar();
-    } else if (choice == Configuracion.Descargar) {
-      _sincronizar();
-      _LimpiaBase();
-      _buscaMediciones();
-    } else if (choice == Configuracion.Actualizar) {
-      _refrescarMedicionesList();
     } else if (choice == Configuracion.LogOut) {
       _cerrarSesion();
     }
   }
 
-  _cerrarSesion()async {
-    await _dbHelper.logOut();
-    print("Inspector deslogueado");
-    Navigator.push(
-        context,
-        //MaterialPageRoute(builder: (context) => SecondRoute()),
-        MaterialPageRoute(builder: (context) => LoginRoute()));
-  }
+  _list() => Expanded(
+    child: Card(
+      margin: EdgeInsets.fromLTRB(20, 30, 20, 0),
+      child: ListView.builder(
+        padding: EdgeInsets.all(7),
+        itemBuilder: (context,index){
+          return Column(
+            children: <Widget>[
+              ListTile(
+                title: Text('('+_mediciones[index].padron+') '+_mediciones[index].domicilio),
+                subtitle: Text(
+                    'Medidor: '+_mediciones[index].medidor + ' Lectura: '+_mediciones[index].lectura.toString()+ ' Anterior: '+_mediciones[index].ultima_lectura.toString()
+                ),
+                leading: Icon(Icons.home,
+                  color: _mediciones[index].lectura.toString() == '0'?  Colors.grey[600] : Colors.greenAccent,
+                ),
+                onTap: () {
+                  setState(() {
+                    _medicion = _mediciones[index];
+                    _ctrlMedidor.text = _mediciones[index].medidor;
+                    if (_mediciones[index].lectura.toString() == 'null')
+                      _ctrlLectura.text = '' ;
+                    else
+                      _ctrlLectura.text = _mediciones[index].lectura.toString() ;
+                    _ctrlDomicilio.text = _mediciones[index].domicilio;
+                    _mostrarForm = !_mostrarForm;
+                  });
+                },
+              ),
+              // Text('Medidor: '+_mediciones[index].medidor,textScaleFactor: 0.9),
+              // Text('Lectura: '+_mediciones[index].lectura.toString(),textScaleFactor: 0.9),
+              Divider(
+                height: 5.0,
+              )
+            ],
+          );
+        },
+        itemCount: _mediciones.length,
+      ),
+    ),
+  );
 
   _form() => Container(
       color: Colors.white,
@@ -152,15 +187,87 @@ class _MyHomePageState extends State<MyHomePage> {
       )
   );
 
-  _refrescarMedicionesList() async{
-    List<Medicion> x = await _dbHelper.mostrarMediciones();
-    setState(() {
-      _mediciones = x;
-    });
+  Future<http.Response> _sincronizar() async{
+    List<Medicion> medicionesList = await _dbHelper.lecturasCargadas();
+    if (medicionesList.length>0) {
+      var url = urlSincronizar();
+      var body = json.encode(medicionesList);
+      var response;
+      var ok = true;
+      print('body: '+ body);
+
+      try {
+        response = await http.post(url, headers: {'Content-Type': "application/json"}, body:   body).timeout(const Duration(seconds: 5));
+      } on TimeoutException catch (e) {
+        mensajeError(context, 'Error', 'Tiempo de espera agotado. Revise su conexión y vuelva a intentarlo');
+        ok = false;
+      } on Error catch (e) {
+        mensajeError(context, 'Error', 'Ocurrió un error, intente más tarde');
+        ok = false;
+      }
+      if (ok == true) {
+        print("Response status: ${response.statusCode}");
+        print("Response body: ${response.contentLength}");
+        print(response.headers);
+        print(response.request);
+        if ( response.statusCode == 201 ) {
+          _LimpiaBase();
+          _descargaMediciones();
+          mensajeExito(context, 'Éxito', 'La base de datos se ha actualizado con éxito.');
+        }
+        return response;
+      }
+    } else {
+      // No hay mediciones para subir, únicamente descargo las mediciones
+      _LimpiaBase();
+      _descargaMediciones();
+    }
   }
 
-  _insertaDescargado(Medicion medicion) async{
-    await _dbHelper.insertJson(medicion);
+  Future _descargaMediciones() async {
+    var url = urlDescarga()+inspector_id.toString();
+    print(url);
+    var jsonData;
+    var ok = true;
+
+    try {
+      jsonData = await http.get(url);
+    } on TimeoutException catch (e) {
+      mensajeError(context, 'Error', 'Tiempo de espera agotado. Revise su conexión y vuelva a intentarlo');
+      ok = false;
+    } on Error catch (e) {
+      mensajeError(context, 'Error', 'Ocurrió un error, intente más tarde');
+      ok = false;
+    }
+    if (ok == true) {
+      print(jsonData.statusCode);
+      if (jsonData.statusCode == 200) {
+        List mediciones = json.decode(jsonData.body);
+        List<Medicion> listaMediciones = mediciones.map((map) => Medicion.fromJson(map)).toList();
+        for (var medicion in listaMediciones) {
+          Medicion _medicionObject = Medicion(
+              id: medicion.id,
+              periodo: medicion.periodo,
+              padron: medicion.padron,
+              medidor: medicion.medidor,
+              lectura: null,
+              fecha_lectura: null,
+              domicilio: medicion.domicilio,
+              ultima_lectura: medicion.ultima_lectura,
+              inspector: medicion.inspector
+          );
+          // Grabo en la base de datos
+          _insertaDescargado(_medicionObject);
+        }
+        // Muestro en la List View
+        List<Medicion> x = await _dbHelper.mostrarMediciones();
+        setState(() {
+          _mediciones = x;
+        });
+      }
+    } else {
+      mensajeError(context, 'Error', 'Ocurrió un error, intente más tarde');
+    }
   }
 
   _onSumbit() async{
@@ -172,6 +279,23 @@ class _MyHomePageState extends State<MyHomePage> {
       _refrescarMedicionesList();
       _resetForm();
     }
+  }
+
+  _insertaDescargado(Medicion medicion) async{
+    await _dbHelper.insertJson(medicion);
+  }
+
+  _refrescarMedicionesList() async{
+    List<Medicion> x = await _dbHelper.mostrarMediciones();
+    setState(() {
+      _mediciones = x;
+    });
+  }
+
+  _traeInspectorLogeado() async{
+    List<Inspector> x = await _dbHelper.buscaInspectores();
+    inspector_nombre = x[0].nombre;
+    inspector_id = x[0].id;
   }
 
   _LimpiaBase() async {
@@ -189,117 +313,13 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  Future _buscaMediciones() async {
-    var url = urlDescarga();
-    var jsonData = await http.get(url);
-    if (jsonData.statusCode == 200) {
-      List mediciones = json.decode(jsonData.body);
-      List<Medicion> listaMediciones = mediciones.map((map) => Medicion.fromJson(map)).toList();
-      for (var medicion in listaMediciones) {
-        Medicion _medicionObject = Medicion(
-            id: medicion.id,
-            periodo: medicion.periodo,
-            padron: medicion.padron,
-            medidor: medicion.medidor,
-            lectura: null,
-            fecha_lectura: null,
-            domicilio: medicion.domicilio,
-            ultima_lectura: medicion.ultima_lectura,
-            inspector: medicion.inspector
-        );
-        // Grabo en la base de datos
-        _insertaDescargado(_medicionObject);
-      }
-      // Muestro en la List View
-      List<Medicion> x = await _dbHelper.mostrarMediciones();
-      setState(() {
-        _mediciones = x;
-      });
-    }
+  _cerrarSesion()async {
+    await _dbHelper.logOut();
+    print("Inspector deslogueado");
+    Navigator.push(
+        context,
+        //MaterialPageRoute(builder: (context) => SecondRoute()),
+        MaterialPageRoute(builder: (context) => LoginRoute()));
   }
 
-  Future<http.Response> _sincronizar() async{
-    List<Medicion> medicionesList = await _dbHelper.lecturasCargadas();
-    var url = urlSincronizar();
-    var body = json.encode(medicionesList);
-    print('body: '+ body);
-
-    var response = await http.post(url, headers: {'Content-Type': "application/json"}, body:   body);
-    print("Response status: ${response.statusCode}");
-    print("Response body: ${response.contentLength}");
-    print(response.headers);
-    print(response.request);
-    return response;
-  }
-
-  Future _buscaInspectores() async {
-    var url = urlInspector();
-    var jsonData = await http.get(url);
-    if (jsonData.statusCode == 200) {
-      List mediciones = json.decode(jsonData.body);
-      List<Medicion> listaMediciones = mediciones.map((map) => Medicion.fromJson(map)).toList();
-      for (var medicion in listaMediciones) {
-        Medicion _medicionObject = Medicion(
-            id: medicion.id,
-            periodo: medicion.periodo,
-            padron: medicion.padron,
-            medidor: medicion.medidor,
-            lectura: null,
-            fecha_lectura: null,
-            domicilio: medicion.domicilio,
-            ultima_lectura: medicion.ultima_lectura,
-            inspector: medicion.inspector
-        );
-        // Grabo en la base de datos
-        _insertaDescargado(_medicionObject);
-      }
-      // Muestro en la List View
-      List<Medicion> x = await _dbHelper.mostrarMediciones();
-      setState(() {
-        _mediciones = x;
-      });
-    }
-  }
-
-  _list() => Expanded(
-    child: Card(
-      margin: EdgeInsets.fromLTRB(20, 30, 20, 0),
-      child: ListView.builder(
-        padding: EdgeInsets.all(7),
-        itemBuilder: (context,index){
-          return Column(
-            children: <Widget>[
-              ListTile(
-                title: Text('('+_mediciones[index].padron+') '+_mediciones[index].domicilio),
-                subtitle: Text(
-                    'Medidor: '+_mediciones[index].medidor + ' Lectura: '+_mediciones[index].lectura.toString()+ ' Anterior: '+_mediciones[index].ultima_lectura.toString()
-                ),
-                leading: Icon(Icons.home,
-                  color: _mediciones[index].lectura.toString() == '0'?  Colors.grey[600] : Colors.greenAccent,
-                ),
-                onTap: () {
-                  setState(() {
-                    _medicion = _mediciones[index];
-                    _ctrlMedidor.text = _mediciones[index].medidor;
-                    if (_mediciones[index].lectura.toString() == 'null')
-                      _ctrlLectura.text = '' ;
-                    else
-                      _ctrlLectura.text = _mediciones[index].lectura.toString() ;
-                      _ctrlDomicilio.text = _mediciones[index].domicilio;
-                      _mostrarForm = !_mostrarForm;
-                  });
-                },
-              ),
-              // Text('Medidor: '+_mediciones[index].medidor,textScaleFactor: 0.9),
-              // Text('Lectura: '+_mediciones[index].lectura.toString(),textScaleFactor: 0.9),
-              Divider(
-                height: 5.0,
-              )
-            ],
-          );
-        },
-        itemCount: _mediciones.length,
-      ),
-    ),
-  );
 }

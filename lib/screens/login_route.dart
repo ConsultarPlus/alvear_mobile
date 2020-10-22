@@ -91,8 +91,6 @@ class _LoginRouteState extends State<LoginRoute> {
       }
       if (auth != true) {
         mensajeError(context, 'Error', 'DNI o pin incorrecto');
-        print(
-            "El inspector o la clave no coinciden con los inspectores activos");
       }
     }
   }
