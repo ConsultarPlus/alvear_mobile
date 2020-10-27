@@ -35,7 +35,7 @@ class DatabaseHelper{
         ${Medicion.colMedidor} TEXT NULL,
         ${Medicion.colLectura} INTEGER NULL,
         ${Medicion.colFecha} TEXT NULL,
-        ${Medicion.colDomicilio} TEXT NULL,
+        ${Medicion.colDireccion} TEXT NULL,
         ${Medicion.colUltima} INTEGER NULL,
         ${Medicion.colInspector} INTEGER NULL
         )  

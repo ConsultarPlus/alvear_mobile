@@ -103,12 +103,14 @@ class _MyHomePageState extends State<MyHomePage> {
           return Column(
             children: <Widget>[
               ListTile(
-                title: Text('('+_mediciones[index].padron+') '+_mediciones[index].domicilio),
+                title: Text('('+_mediciones[index].padron+') '+_mediciones[index].direccion),
                 subtitle: Text(
-                    'Medidor: '+_mediciones[index].medidor + ' Lectura: '+_mediciones[index].lectura.toString()+ ' Anterior: '+_mediciones[index].ultima_lectura.toString()
+                    'Medidor: '+_mediciones[index].medidor +
+                    ' Lectura Anterior: '+_mediciones[index].ultima_lectura.toString() +
+                    ' Actual: ' + (_mediciones[index].lectura.toString() == 'null'?  '0' : _mediciones[index].lectura.toString()),
                 ),
                 leading: Icon(Icons.home,
-                  color: _mediciones[index].lectura.toString() == '0'?  Colors.grey[600] : Colors.greenAccent,
+                  color: _mediciones[index].lectura.toString() == 'null'?  Colors.grey[600] : Colors.greenAccent,
                 ),
                 onTap: () {
                   setState(() {
@@ -118,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> {
                       _ctrlLectura.text = '' ;
                     else
                       _ctrlLectura.text = _mediciones[index].lectura.toString() ;
-                    _ctrlDomicilio.text = _mediciones[index].domicilio;
+                    _ctrlDomicilio.text = _mediciones[index].direccion;
                     _mostrarForm = !_mostrarForm;
                   });
                 },
@@ -252,7 +254,7 @@ class _MyHomePageState extends State<MyHomePage> {
               medidor: medicion.medidor,
               lectura: null,
               fecha_lectura: null,
-              domicilio: medicion.domicilio,
+              direccion: medicion.direccion,
               ultima_lectura: medicion.ultima_lectura,
               inspector: medicion.inspector
           );

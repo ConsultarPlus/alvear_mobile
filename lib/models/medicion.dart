@@ -6,11 +6,13 @@ class Medicion {
   static const colMedidor = 'medidor';
   static const colLectura = 'lectura';
   static const colFecha = 'fecha_lectura';
-  static const colDomicilio = 'domicilio';
+  static const colDireccion = 'direccion';
   static const colUltima = 'ultima_lectura';
   static const colInspector = 'inspector';
 
-  Medicion({this.id, this.periodo, this.padron, this.medidor, this.lectura, this.fecha_lectura, this.domicilio, this.ultima_lectura, this.inspector});
+  Medicion({this.id, this.periodo, this.padron, this.medidor, this.lectura,
+            this.fecha_lectura, this.direccion, this.ultima_lectura,
+            this.inspector});
 
   Medicion.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -19,7 +21,7 @@ class Medicion {
     medidor = json['medidor'];
     lectura = json['lectura'];
     fecha_lectura = json['fecha_lectura'];
-    domicilio = json['domicilio'];
+    direccion = json['direccion'];
     ultima_lectura = json['ultima_lectura'];
     inspector = json['inspector'];
   }
@@ -31,7 +33,7 @@ class Medicion {
     medidor = map[colMedidor];
     lectura = map[colLectura];
     fecha_lectura = map[colFecha];
-    domicilio = map[colDomicilio];
+    direccion = map[colDireccion];
     ultima_lectura = map[colUltima];
     inspector = map[colInspector];
   }
@@ -42,7 +44,7 @@ class Medicion {
   String medidor;
   int lectura;
   String fecha_lectura;
-  String domicilio;
+  String direccion;
   int ultima_lectura;
   int inspector;
 
@@ -54,7 +56,7 @@ class Medicion {
     json['medidor'] = this.medidor;
     json['lectura'] = this.lectura;
     json['fecha_lectura'] = this.fecha_lectura;
-    json['domicilio'] = this.domicilio;
+    json['direccion'] = this.direccion;
     json['ultima_lectura'] = this.ultima_lectura;
     json['inspector'] = this.inspector;
     return json;
