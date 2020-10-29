@@ -17,6 +17,7 @@ mensajeNormal(BuildContext context, String titulo, String mensaje) {
 }
 
 showAlertDialog(BuildContext context, String tipo, String titulo, String mensaje) {
+  Navigator.of(context).pop();
   var colorto;
   var colorto_texto;
   switch(tipo) {
@@ -71,3 +72,27 @@ showAlertDialog(BuildContext context, String tipo, String titulo, String mensaje
     },
   );
 }
+
+
+procesando(BuildContext context, String texto) {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (BuildContext context) {
+      return Dialog(
+        child: new Row(
+          // mainAxisSize: MainAxisSize.min,
+          children: [
+            new SizedBox(
+              child: CircularProgressIndicator(),
+              height: 30.0,
+              width: 20.0,
+            ),
+            new Text('  ' + texto),
+          ],
+        ),
+      );
+    },
+  );
+}
+

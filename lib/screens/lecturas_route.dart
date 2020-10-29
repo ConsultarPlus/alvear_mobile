@@ -1,4 +1,5 @@
 import 'dart:async';
+// import 'dart:html';
 import 'package:flutter/material.dart';
 import 'login_route.dart';
 import 'package:alvear/models/inspector.dart';
@@ -20,7 +21,8 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+
+  class _MyHomePageState extends State<MyHomePage> {
 
   Medicion _medicion = Medicion();
   List<Medicion> _mediciones =[];
@@ -44,7 +46,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<bool> _onBackPressed() {
-    print('****fuck you');
+    print('****_onBackPressed');
 }
   @override
   Widget build(BuildContext context) {
@@ -70,29 +72,33 @@ class _MyHomePageState extends State<MyHomePage> {
           ],
         ),
         body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text("Inspector: $inspector_nombre", textScaleFactor: 1.3),
-              _list(),
-              Visibility(
-                visible: _mostrarForm,
-                child: _form(),
-              ),
-            ],
-          ),
+
+          child:
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                Text("Inspector: $inspector_nombre", textScaleFactor: 1.3),
+                _list(),
+                Visibility(
+                  visible: _mostrarForm,
+                  child: _form(),
+                ),
+              ],
+            ),
         ),
       ),
     );
   }
 
   void OpcionSeleccionada(String choice) {
+    procesando(context, 'averga');
     if (choice == Configuracion.Sincronizar) {
       _sincronizar();
     } else if (choice == Configuracion.LogOut) {
       _cerrarSesion();
     }
   }
+
 
   _list() => Expanded(
     child: Card(
@@ -120,8 +126,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       _ctrlLectura.text = '' ;
                     else
                       _ctrlLectura.text = _mediciones[index].lectura.toString() ;
-                    _ctrlDomicilio.text = _mediciones[index].direccion;
-                    _mostrarForm = !_mostrarForm;
+                      _ctrlDomicilio.text = _mediciones[index].direccion;
+                      _mostrarForm = !_mostrarForm;
                   });
                 },
               ),
@@ -196,26 +202,30 @@ class _MyHomePageState extends State<MyHomePage> {
       var body = json.encode(medicionesList);
       var response;
       var ok = true;
-      print('body: '+ body);
-
+      print('*** body: ' + body);
       try {
         response = await http.post(url, headers: {'Content-Type': "application/json"}, body:   body).timeout(const Duration(seconds: 5));
       } on TimeoutException catch (e) {
         mensajeError(context, 'Error', 'Tiempo de espera agotado. Revise su conexión y vuelva a intentarlo');
         ok = false;
+
       } on Error catch (e) {
         mensajeError(context, 'Error', 'Ocurrió un error, intente más tarde');
         ok = false;
       }
       if (ok == true) {
-        print("Response status: ${response.statusCode}");
-        print("Response body: ${response.contentLength}");
-        print(response.headers);
-        print(response.request);
+        print("***Response status: ${response.statusCode}");
+        // print("Response body: ${response.contentLength}");
+        // print("response.headers: " + response.headers);
+        // print("response.request: " + response.request);
         if ( response.statusCode == 201 ) {
           _LimpiaBase();
           _descargaMediciones();
-          mensajeExito(context, 'Éxito', 'La base de datos se ha actualizado con éxito.');
+          mensajeExito(context, 'Éxito',
+              'La base de datos se ha actualizado con éxito.');
+        } else {
+          var _error = 'Error (' + response.statusCode.toString() + ')';
+          mensajeError(context, _error, 'Ocurrió un error, intente más tarde');
         }
         return response;
       }
@@ -228,12 +238,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future _descargaMediciones() async {
     var url = urlDescarga()+inspector_id.toString();
-    print(url);
-    var jsonData;
+    print('***url: ' + url);
+    var response;
     var ok = true;
 
     try {
-      jsonData = await http.get(url);
+      response = await http.get(url).timeout(const Duration(seconds: 5));
     } on TimeoutException catch (e) {
       mensajeError(context, 'Error', 'Tiempo de espera agotado. Revise su conexión y vuelva a intentarlo');
       ok = false;
@@ -242,9 +252,9 @@ class _MyHomePageState extends State<MyHomePage> {
       ok = false;
     }
     if (ok == true) {
-      print(jsonData.statusCode);
-      if (jsonData.statusCode == 200) {
-        List mediciones = json.decode(jsonData.body);
+      print('***response.statusCode: ' + response.statusCode.toString());
+      if (response.statusCode == 200) {
+        List mediciones = json.decode(response.body);
         List<Medicion> listaMediciones = mediciones.map((map) => Medicion.fromJson(map)).toList();
         for (var medicion in listaMediciones) {
           Medicion _medicionObject = Medicion(
@@ -267,8 +277,6 @@ class _MyHomePageState extends State<MyHomePage> {
           _mediciones = x;
         });
       }
-    } else {
-      mensajeError(context, 'Error', 'Ocurrió un error, intente más tarde');
     }
   }
 
