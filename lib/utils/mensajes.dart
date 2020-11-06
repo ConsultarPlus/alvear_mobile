@@ -17,7 +17,7 @@ mensajeNormal(BuildContext context, String titulo, String mensaje) {
 }
 
 showAlertDialog(BuildContext context, String tipo, String titulo, String mensaje) {
-  Navigator.of(context).pop();
+  // Navigator.of(context).pop();
   var colorto;
   var colorto_texto;
   switch(tipo) {

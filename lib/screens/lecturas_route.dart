@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:io';
 // import 'dart:html';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'login_route.dart';
 import 'package:alvear/models/inspector.dart';
 import 'package:alvear/models/medicion.dart';
@@ -33,6 +35,7 @@ class MyHomePage extends StatefulWidget {
   final _ctrlDomicilio = TextEditingController();
   bool _mostrarForm = false;
   var inspector_nombre;
+  var periodo;
   var inspector_id;
 
   @override
@@ -42,12 +45,13 @@ class MyHomePage extends StatefulWidget {
       _dbHelper = DatabaseHelper.instance;
     });
     _traeInspectorLogeado();
+    _traePeriodo();
     _refrescarMedicionesList();
   }
 
   Future<bool> _onBackPressed() {
     print('****_onBackPressed');
-}
+  }
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
@@ -78,6 +82,7 @@ class MyHomePage extends StatefulWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 Text("Inspector: $inspector_nombre", textScaleFactor: 1.3),
+                Text("Período: $periodo", textScaleFactor: 1.3),
                 _list(),
                 Visibility(
                   visible: _mostrarForm,
@@ -91,14 +96,13 @@ class MyHomePage extends StatefulWidget {
   }
 
   void OpcionSeleccionada(String choice) {
-    procesando(context, 'averga');
+    // procesando(context, '');
     if (choice == Configuracion.Sincronizar) {
       _sincronizar();
     } else if (choice == Configuracion.LogOut) {
       _cerrarSesion();
     }
   }
-
 
   _list() => Expanded(
     child: Card(
@@ -204,15 +208,19 @@ class MyHomePage extends StatefulWidget {
       var ok = true;
       print('*** body: ' + body);
       try {
+        print('epa');
         response = await http.post(url, headers: {'Content-Type': "application/json"}, body:   body).timeout(const Duration(seconds: 5));
       } on TimeoutException catch (e) {
         mensajeError(context, 'Error', 'Tiempo de espera agotado. Revise su conexión y vuelva a intentarlo');
         ok = false;
-
       } on Error catch (e) {
         mensajeError(context, 'Error', 'Ocurrió un error, intente más tarde');
         ok = false;
+      } on SocketException catch (e) {
+        mensajeError(context, 'Error', 'Tiempo de espera agotado. Revise su conexión y vuelva a intentarlo');
+        ok = false;
       }
+      print(ok);
       if (ok == true) {
         print("***Response status: ${response.statusCode}");
         // print("Response body: ${response.contentLength}");
@@ -221,6 +229,7 @@ class MyHomePage extends StatefulWidget {
         if ( response.statusCode == 201 ) {
           _LimpiaBase();
           _descargaMediciones();
+          _traePeriodo();
           mensajeExito(context, 'Éxito',
               'La base de datos se ha actualizado con éxito.');
         } else {
@@ -233,6 +242,9 @@ class MyHomePage extends StatefulWidget {
       // No hay mediciones para subir, únicamente descargo las mediciones
       _LimpiaBase();
       _descargaMediciones();
+      _traePeriodo();
+      mensajeExito(context, 'Éxito',
+      'La base de datos se ha actualizado con éxito.');
     }
   }
 
@@ -306,6 +318,13 @@ class MyHomePage extends StatefulWidget {
     List<Inspector> x = await _dbHelper.buscaInspectores();
     inspector_nombre = x[0].nombre;
     inspector_id = x[0].id;
+  }
+
+  _traePeriodo() async{
+    List<Medicion> y = await _dbHelper.mostrarMediciones();
+    setState(() {
+      periodo = y[0].periodo;z
+    });
   }
 
   _LimpiaBase() async {
