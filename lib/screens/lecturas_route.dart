@@ -9,6 +9,7 @@ import 'package:alvear/models/medicion.dart';
 import 'package:alvear/utils/database_helper.dart';
 import 'package:alvear/utils/mensajes.dart';
 import 'package:alvear/utils/urls.dart';
+import 'package:alvear/utils/globals.dart' as globals;
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:alvear/Config.dart';
@@ -34,17 +35,15 @@ class MyHomePage extends StatefulWidget {
   final _ctrlLectura = TextEditingController();
   final _ctrlDomicilio = TextEditingController();
   bool _mostrarForm = false;
-  var inspector_nombre;
-  var periodo;
-  var inspector_id;
+  String _periodo;
 
   @override
   void initState(){
     super.initState();
     setState(() {
       _dbHelper = DatabaseHelper.instance;
+      _periodo = " ";
     });
-    _traeInspectorLogeado();
     _traePeriodo();
     _refrescarMedicionesList();
   }
@@ -81,8 +80,8 @@ class MyHomePage extends StatefulWidget {
             Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
-                Text("Inspector: $inspector_nombre", textScaleFactor: 1.3),
-                Text("Período: $periodo", textScaleFactor: 1.3),
+                Text("Inspector: "+ globals.inspector_nombre, textScaleFactor: 1.3),
+                Text("Período: "+ _periodo, textScaleFactor: 1.3),
                 _list(),
                 Visibility(
                   visible: _mostrarForm,
@@ -95,10 +94,15 @@ class MyHomePage extends StatefulWidget {
     );
   }
 
+  @override
   void OpcionSeleccionada(String choice) {
     // procesando(context, '');
     if (choice == Configuracion.Sincronizar) {
       _sincronizar();
+      // setState(() {
+      //   _periodo = globals.periodo;
+      // });
+      // print("sincronizar_periodo: "+_periodo);
     } else if (choice == Configuracion.LogOut) {
       _cerrarSesion();
     }
@@ -202,13 +206,13 @@ class MyHomePage extends StatefulWidget {
   Future<http.Response> _sincronizar() async{
     List<Medicion> medicionesList = await _dbHelper.lecturasCargadas();
     if (medicionesList.length>0) {
+      // Hay mediciones nuevas para subir, las subo
       var url = urlSincronizar();
       var body = json.encode(medicionesList);
       var response;
       var ok = true;
       print('*** body: ' + body);
       try {
-        print('epa');
         response = await http.post(url, headers: {'Content-Type': "application/json"}, body:   body).timeout(const Duration(seconds: 5));
       } on TimeoutException catch (e) {
         mensajeError(context, 'Error', 'Tiempo de espera agotado. Revise su conexión y vuelva a intentarlo');
@@ -227,11 +231,10 @@ class MyHomePage extends StatefulWidget {
         // print("response.headers: " + response.headers);
         // print("response.request: " + response.request);
         if ( response.statusCode == 201 ) {
-          _LimpiaBase();
+          // _LimpiaBase();
           _descargaMediciones();
-          _traePeriodo();
-          mensajeExito(context, 'Éxito',
-              'La base de datos se ha actualizado con éxito.');
+          // mensajeExito(context, 'Éxito',
+          //     'La base de datos se ha actualizado con éxito.');
         } else {
           var _error = 'Error (' + response.statusCode.toString() + ')';
           mensajeError(context, _error, 'Ocurrió un error, intente más tarde');
@@ -239,17 +242,17 @@ class MyHomePage extends StatefulWidget {
         return response;
       }
     } else {
-      // No hay mediciones para subir, únicamente descargo las mediciones
-      _LimpiaBase();
+      // No hay mediciones para subir, únicamente descargo las mediciones si es que hay nuevas
+      // _LimpiaBase(); // cuidado con ésto que borra toda la DB!!
       _descargaMediciones();
       _traePeriodo();
-      mensajeExito(context, 'Éxito',
-      'La base de datos se ha actualizado con éxito.');
+      // mensajeExito(context, 'Éxito',
+      // 'La base de datos se ha actualizado con éxito.');
     }
   }
 
-  Future _descargaMediciones() async {
-    var url = urlDescarga()+inspector_id.toString();
+  Future _descargaMediciones() async{
+    var url = urlDescarga()+globals.inspector_ID.toString();
     print('***url: ' + url);
     var response;
     var ok = true;
@@ -262,10 +265,14 @@ class MyHomePage extends StatefulWidget {
     } on Error catch (e) {
       mensajeError(context, 'Error', 'Ocurrió un error, intente más tarde');
       ok = false;
+    } on SocketException catch (e) {
+      mensajeError(context, 'Error', 'Tiempo de espera agotado. Revise su conexión y vuelva a intentarlo');
+      ok = false;
     }
     if (ok == true) {
       print('***response.statusCode: ' + response.statusCode.toString());
       if (response.statusCode == 200) {
+        _LimpiaBase();
         List mediciones = json.decode(response.body);
         List<Medicion> listaMediciones = mediciones.map((map) => Medicion.fromJson(map)).toList();
         for (var medicion in listaMediciones) {
@@ -284,10 +291,13 @@ class MyHomePage extends StatefulWidget {
           _insertaDescargado(_medicionObject);
         }
         // Muestro en la List View
-        List<Medicion> x = await _dbHelper.mostrarMediciones();
+        List<Medicion> x = await _dbHelper.mostrarMediciones(globals.inspector_ID);
         setState(() {
           _mediciones = x;
+          _periodo = x[0].periodo;
         });
+        mensajeExito(context, 'Éxito',
+            'La base de datos se ha actualizado con éxito.');
       }
     }
   }
@@ -308,22 +318,35 @@ class MyHomePage extends StatefulWidget {
   }
 
   _refrescarMedicionesList() async{
-    List<Medicion> x = await _dbHelper.mostrarMediciones();
+    List<Medicion> x = await _dbHelper.mostrarMediciones(globals.inspector_ID);
     setState(() {
       _mediciones = x;
     });
   }
 
-  _traeInspectorLogeado() async{
-    List<Inspector> x = await _dbHelper.buscaInspectores();
-    inspector_nombre = x[0].nombre;
-    inspector_id = x[0].id;
-  }
+  // ahora se usan las variables globales...
+  // _traeInspectorLogeado() async{
+  //   print("y acá cuando carajo entra?");
+  //   List<Inspector> listaInspectores = await _dbHelper.buscaInspectores();
+  //   for (var inspector in listaInspectores) {
+  //     if (inspector.logueado == 'S') {
+  //       inspector_nombre = inspector.nombre;
+  //       inspector_id = inspector.id;
+  //       break;
+  //     }
+  //   };
+  // }
 
   _traePeriodo() async{
-    List<Medicion> y = await _dbHelper.mostrarMediciones();
+    List<Medicion> y = await _dbHelper.mostrarMediciones(globals.inspector_ID);
+    if (y.length > 0) {
+      globals.periodo = y[0].periodo;
+    } else {
+      globals.periodo = "-Sin Lecturas-";
+    }
+    // print("_traerPeriodo: "+globals.periodo);
     setState(() {
-      periodo = y[0].periodo;z
+      _periodo = globals.periodo;
     });
   }
 

@@ -5,14 +5,16 @@ class Inspector {
   static const colNombre = 'nombre';
   static const colEmail = 'e_mail';
   static const colClave = 'clave_app';
+  static const colLogueado = 'logueado';
 
   int id;
   int dni;
   String nombre;
   String e_mail;
   String clave_app;
+  String logueado;
 
-  Inspector({this.id, this.dni, this.nombre, this.e_mail, this.clave_app});
+  Inspector({this.id, this.dni, this.nombre, this.e_mail, this.clave_app, this.logueado});
 
   Inspector.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -29,6 +31,7 @@ class Inspector {
     json['nombre'] = this.nombre;
     json['e_mail'] = this.e_mail;
     json['clave_app'] = this.clave_app;
+    json['logueado'] = this.logueado;
     return json;
   }
 
@@ -38,10 +41,11 @@ class Inspector {
     nombre = map[colNombre];
     e_mail = map[colEmail];
     clave_app = map[colClave];
+    logueado = map[colLogueado];
   }
 
   Map<String, dynamic> toMap() {
-    var map = <String, dynamic>{colId: id};
+    var map = <String, dynamic>{colId: id, colLogueado: logueado};
     if (id != null) map[colId] = id;
     return map;
   }

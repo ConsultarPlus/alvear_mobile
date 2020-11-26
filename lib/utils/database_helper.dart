@@ -46,10 +46,13 @@ class DatabaseHelper{
         ${Inspector.colDni} INTEGER NULL,
         ${Inspector.colNombre} TEXT NULL,
         ${Inspector.colEmail} TEXT NULL,
-        ${Inspector.colClave} TEXT NULL
+        ${Inspector.colClave} TEXT NULL,
+        ${Inspector.colLogueado} TEXT NULL        
         )  
     ''');
   }
+
+  // """ CONSULTAS MEDICIONES/LECTURAS """
 
   Future<void> insertJson(Medicion medicion) async{
     Database db = await database;
@@ -75,9 +78,11 @@ class DatabaseHelper{
     ''');
   }
 
-  Future<List<Medicion>> mostrarMediciones() async{
+  Future<List<Medicion>> mostrarMediciones(inspectorId) async{
     Database db = await database;
-    List<Map> mediciones =await db.query(Medicion.tblMedicion);
+    // raw query
+    List<Map> mediciones = await db.rawQuery('SELECT * FROM  ${Medicion.tblMedicion} WHERE ${Medicion.colInspector}=?', [inspectorId]);
+    // mediciones.forEach((row) => print(row));
     return mediciones.length == 0
     ?[]
     :mediciones.map((e) => Medicion.fromMap(e)).toList();
@@ -93,13 +98,8 @@ class DatabaseHelper{
         :mediciones.map((e) => Medicion.fromMap(e)).toList();
   }
 
-
   // """ CONSULTAS INSPECTORES """
 
-  // Future<int> insertInspector(Inspector inspector) async {
-  //   Database db = await database;
-  //   return await db.insert(Inspector.tblInspector, inspector.toMap());
-  // }
   Future<void> insertInspector(Inspector inspector) async{
     Database db = await database;
     await db.insert(Inspector.tblInspector, inspector.toJson(), conflictAlgorithm:
@@ -108,16 +108,28 @@ class DatabaseHelper{
 
   Future<List<Inspector>> buscaInspectores() async{
     Database db = await database;
+    // String logged = "S";
     List<Map> inspectores =await db.query(Inspector.tblInspector);
     return inspectores.length == 0
         ?[]
         :inspectores.map((e) => Inspector.fromMap(e)).toList();
   }
 
+  // El logIn es una bandera que marca cual es el inspector logueado
+  Future<int> logIn(Inspector inspector) async {
+    Database db = await database;
+    return await db.update(Inspector.tblInspector, inspector.toMap(),
+        where: '${Inspector.colId}=?',whereArgs: [inspector.id]);
+  }
+
   Future<int> logOut() async {
     Database db = await database;
     await db.execute('''
-    DELETE FROM  ${Inspector.tblInspector}
+    UPDATE ${Inspector.tblInspector}
+      SET ${Inspector.colLogueado} = "N"        
     ''');
+    // await db.execute('''
+    // DELETE FROM  ${Inspector.tblInspector}
+    // ''');
   }
 }
