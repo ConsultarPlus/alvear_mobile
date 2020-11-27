@@ -29,6 +29,7 @@ class MyHomePage extends StatefulWidget {
 
   Medicion _medicion = Medicion();
   List<Medicion> _mediciones =[];
+  List<Medicion> _medicionesAux =[]; // Son las lecturas filtradas
   DatabaseHelper _dbHelper ;
   final _formKey = GlobalKey<FormState>();
   final _ctrlMedidor = TextEditingController();
@@ -45,7 +46,7 @@ class MyHomePage extends StatefulWidget {
       _periodo = " ";
     });
     _traePeriodo();
-    _refrescarMedicionesList();
+    _refrescarMedicionesList()  ;
   }
 
   Future<bool> _onBackPressed() {
@@ -62,7 +63,8 @@ class MyHomePage extends StatefulWidget {
             child: Text(widget.title,
               style: TextStyle(color: Colors.green[400]),),
           ),
-          actions: <Widget>[
+          actions:
+          <Widget>[
             PopupMenuButton(
                 onSelected: OpcionSeleccionada,
                 itemBuilder: (BuildContext context){
@@ -73,6 +75,9 @@ class MyHomePage extends StatefulWidget {
                   }).toList();
                 })
           ],
+          // <Widget>[
+          //   IconButton(icon: Icon(Icons.search), onPressed: () {})
+          // ],
         ),
         body: Center(
 
@@ -113,44 +118,68 @@ class MyHomePage extends StatefulWidget {
       margin: EdgeInsets.fromLTRB(20, 30, 20, 0),
       child: ListView.builder(
         padding: EdgeInsets.all(7),
-        itemBuilder: (context,index){
-          return Column(
-            children: <Widget>[
-              ListTile(
-                title: Text('('+_mediciones[index].padron+') '+_mediciones[index].direccion),
-                subtitle: Text(
-                    'Medidor: '+_mediciones[index].medidor +
-                    ' Lectura Anterior: '+_mediciones[index].ultima_lectura.toString() +
-                    ' Actual: ' + (_mediciones[index].lectura.toString() == 'null'?  '0' : _mediciones[index].lectura.toString()),
-                ),
-                leading: Icon(Icons.home,
-                  color: _mediciones[index].lectura.toString() == 'null'?  Colors.grey[600] : Colors.greenAccent,
-                ),
-                onTap: () {
-                  setState(() {
-                    _medicion = _mediciones[index];
-                    _ctrlMedidor.text = _mediciones[index].medidor;
-                    if (_mediciones[index].lectura.toString() == 'null')
-                      _ctrlLectura.text = '' ;
-                    else
-                      _ctrlLectura.text = _mediciones[index].lectura.toString() ;
-                      _ctrlDomicilio.text = _mediciones[index].direccion;
-                      _mostrarForm = !_mostrarForm;
-                  });
-                },
-              ),
-              // Text('Medidor: '+_mediciones[index].medidor,textScaleFactor: 0.9),
-              // Text('Lectura: '+_mediciones[index].lectura.toString(),textScaleFactor: 0.9),
-              Divider(
-                height: 5.0,
-              )
-            ],
-          );
+        itemBuilder: (context, index) {
+          return index==0 ? _searchBar() : _listarItem(index-1);
         },
-        itemCount: _mediciones.length,
+        itemCount: _medicionesAux.length+1,
       ),
     ),
   );
+
+  _searchBar() {
+    return Padding(
+      padding: const EdgeInsets.all(0.0),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: "Buscar Medidor..."
+        ),
+        onChanged: (text){
+          text = text.toLowerCase();
+          setState(() {
+            _medicionesAux = _mediciones.where((medicion) {
+              var medidor = medicion.medidor.toLowerCase();
+              return medidor.contains(text);
+            }).toList();
+          });
+        },
+      ),
+    );
+  }
+
+  _listarItem(index) {
+    return Column(
+      children: <Widget>[
+        ListTile(
+          title: Text('('+_medicionesAux[index].medidor+') '+_medicionesAux[index].direccion),
+          subtitle: Text(
+            'Padrón: '+_medicionesAux[index].padron +
+                ' Lectura Anterior: '+_medicionesAux[index].ultima_lectura.toString() +
+                ' Actual: ' + (_medicionesAux[index].lectura.toString() == 'null'?  '0' : _medicionesAux[index].lectura.toString()),
+          ),
+          leading: Icon(Icons.home,
+            color: _medicionesAux[index].lectura.toString() == 'null'?  Colors.grey[600] : Colors.greenAccent,
+          ),
+          onTap: () {
+            setState(() {
+              _medicion = _medicionesAux[index];
+              _ctrlMedidor.text = _medicionesAux[index].medidor;
+              if (_medicionesAux[index].lectura.toString() == 'null')
+                _ctrlLectura.text = '' ;
+              else
+                _ctrlLectura.text = _medicionesAux[index].lectura.toString() ;
+              _ctrlDomicilio.text = _medicionesAux[index].direccion;
+              _mostrarForm = !_mostrarForm;
+            });
+          },
+        ),
+        // Text('Medidor: '+_mediciones[index].medidor,textScaleFactor: 0.9),
+        // Text('Lectura: '+_mediciones[index].lectura.toString(),textScaleFactor: 0.9),
+        Divider(
+          height: 5.0,
+        )
+      ],
+    );
+  }
 
   _form() => Container(
       color: Colors.white,
@@ -321,6 +350,7 @@ class MyHomePage extends StatefulWidget {
     List<Medicion> x = await _dbHelper.mostrarMediciones(globals.inspector_ID);
     setState(() {
       _mediciones = x;
+      _medicionesAux = _mediciones;
     });
   }
 
