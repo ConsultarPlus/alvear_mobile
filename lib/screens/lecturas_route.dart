@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 // import 'dart:html';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'login_route.dart';
@@ -101,23 +102,19 @@ class MyHomePage extends StatefulWidget {
 
   @override
   void OpcionSeleccionada(String choice) {
-    // procesando(context, '');
     if (choice == Configuracion.Sincronizar) {
       _sincronizar();
-      // setState(() {
-      //   _periodo = globals.periodo;
-      // });
-      // print("sincronizar_periodo: "+_periodo);
     } else if (choice == Configuracion.LogOut) {
       _cerrarSesion();
     }
   }
 
+  ///////////// LISTA ////////////////////////
   _list() => Expanded(
     child: Card(
-      margin: EdgeInsets.fromLTRB(20, 30, 20, 0),
+      margin: EdgeInsets.fromLTRB(10, 20, 10, 5),
       child: ListView.builder(
-        padding: EdgeInsets.all(7),
+        padding: EdgeInsets.all(5),
         itemBuilder: (context, index) {
           return index==0 ? _searchBar() : _listarItem(index-1);
         },
@@ -150,15 +147,17 @@ class MyHomePage extends StatefulWidget {
     return Column(
       children: <Widget>[
         ListTile(
-          title: Text('('+_medicionesAux[index].medidor+') '+_medicionesAux[index].direccion),
+          title: Text('('+_medicionesAux[index].medidor+') '+_medicionesAux[index].direccion, style: TextStyle(color: Colors.black),),
           subtitle: Text(
             'Padrón: '+_medicionesAux[index].padron +
-                ' Lectura Anterior: '+_medicionesAux[index].ultima_lectura.toString() +
-                ' Actual: ' + (_medicionesAux[index].lectura.toString() == 'null'?  '0' : _medicionesAux[index].lectura.toString()),
+                ' - Lectura Anterior: '+_medicionesAux[index].ultima_lectura.toString() +
+                ' - Actual: ' + (_medicionesAux[index].lectura.toString() == 'null'?  '0' : _medicionesAux[index].lectura.toString()),
+            textScaleFactor: 1,
+            style: TextStyle(color: Colors.black),
           ),
           leading: Icon(Icons.home,
-            color: _medicionesAux[index].lectura.toString() == 'null'?  Colors.grey[600] : Colors.greenAccent,
-          ),
+          color: _medicionesAux[index].lectura.toString() == 'null'?  Colors.grey[600] : Colors.greenAccent,size: 40,
+        ),
           onTap: () {
             setState(() {
               _medicion = _medicionesAux[index];
@@ -172,14 +171,13 @@ class MyHomePage extends StatefulWidget {
             });
           },
         ),
-        // Text('Medidor: '+_mediciones[index].medidor,textScaleFactor: 0.9),
-        // Text('Lectura: '+_mediciones[index].lectura.toString(),textScaleFactor: 0.9),
         Divider(
           height: 5.0,
         )
       ],
     );
   }
+  ///////////////////////////////////////////
 
   _form() => Container(
       color: Colors.white,
@@ -323,8 +321,10 @@ class MyHomePage extends StatefulWidget {
         List<Medicion> x = await _dbHelper.mostrarMediciones(globals.inspector_ID);
         setState(() {
           _mediciones = x;
+          _medicionesAux = _mediciones;
           _periodo = x[0].periodo;
         });
+        _refrescarMedicionesList();
         mensajeExito(context, 'Éxito',
             'La base de datos se ha actualizado con éxito.');
       }
@@ -354,19 +354,6 @@ class MyHomePage extends StatefulWidget {
     });
   }
 
-  // ahora se usan las variables globales...
-  // _traeInspectorLogeado() async{
-  //   print("y acá cuando carajo entra?");
-  //   List<Inspector> listaInspectores = await _dbHelper.buscaInspectores();
-  //   for (var inspector in listaInspectores) {
-  //     if (inspector.logueado == 'S') {
-  //       inspector_nombre = inspector.nombre;
-  //       inspector_id = inspector.id;
-  //       break;
-  //     }
-  //   };
-  // }
-
   _traePeriodo() async{
     List<Medicion> y = await _dbHelper.mostrarMediciones(globals.inspector_ID);
     if (y.length > 0) {
@@ -374,7 +361,6 @@ class MyHomePage extends StatefulWidget {
     } else {
       globals.periodo = "-Sin Lecturas-";
     }
-    // print("_traerPeriodo: "+globals.periodo);
     setState(() {
       _periodo = globals.periodo;
     });
