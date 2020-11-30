@@ -64,13 +64,13 @@ class _LoginRouteState extends State<LoginRoute> {
     try {
       jsonData = await http.get(url).timeout(const Duration(seconds: 3));
     } on TimeoutException catch (e) {
-      mensajeError(context, 'Error', 'Tiempo de espera agotado');
+      mensajeError(context, 'Error', 'URL: '+url+' - Tiempo de espera agotado');
       ok = false;
     } on Error catch (e) {
-      mensajeError(context, 'Error', 'Ocurrió un error, intente más tarde');
+      mensajeError(context, 'Error', 'URL: '+url+' - Ocurrió un error, intente más tarde');
       ok = false;
     } on SocketException catch (e) {
-      mensajeError(context, 'Error', 'Ocurrió un error, intente más tarde');
+      mensajeError(context, 'Error', 'URL: '+url+' - Ocurrió un error, intente más tarde');
       ok = false;
     }
     if (ok == true) {
