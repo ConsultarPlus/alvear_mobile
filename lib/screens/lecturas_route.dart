@@ -109,7 +109,7 @@ class MyHomePage extends StatefulWidget {
     }
   }
 
-  ///////////// LISTA ////////////////////////
+  ///////////// LISTA ////////////////////////flu
   _list() => Expanded(
     child: Card(
       margin: EdgeInsets.fromLTRB(10, 20, 10, 5),
@@ -128,13 +128,13 @@ class MyHomePage extends StatefulWidget {
       padding: const EdgeInsets.all(0.0),
       child: TextField(
         decoration: InputDecoration(
-          hintText: "Buscar Medidor..."
+          hintText: "Buscar por Medidor o Dirección..."
         ),
         onChanged: (text){
           text = text.toLowerCase();
           setState(() {
-            _medicionesAux = _mediciones.where((medicion) {
-              var medidor = medicion.medidor.toLowerCase();
+            _medicionesAux = _mediciones.where( (medicion){
+              var medidor = medicion.medidor.toLowerCase() + medicion.direccion.toLowerCase();
               return medidor.contains(text);
             }).toList();
           });
