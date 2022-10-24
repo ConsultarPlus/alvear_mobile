@@ -27,7 +27,9 @@ class MyHomePage extends StatefulWidget {
 
 
   class _MyHomePageState extends State<MyHomePage> {
-
+  _MyHomePageState(){
+    String _ctrlObservacion = _listaObservaciones[0];
+  }
   Medicion _medicion = Medicion();
   List<Medicion> _mediciones =[];
   List<Medicion> _medicionesAux =[]; // Son las lecturas filtradas
@@ -36,8 +38,10 @@ class MyHomePage extends StatefulWidget {
   final _ctrlMedidor = TextEditingController();
   final _ctrlLectura = TextEditingController();
   final _ctrlDomicilio = TextEditingController();
+  final _listaObservaciones = ['', 'Medidor no encontrado', 'Medidor Tapado', 'Información incorrecta', 'Lectura menor a la última'];
   bool _mostrarForm = false;
   String _periodo;
+  String _ctrlObservacion = '';
 
   @override
   void initState(){
@@ -52,6 +56,9 @@ class MyHomePage extends StatefulWidget {
 
   Future<bool> _onBackPressed() {
     print('****_onBackPressed');
+    setState(() {
+      _mostrarForm = !_mostrarForm;
+    });
   }
   @override
   Widget build(BuildContext context) {
@@ -109,7 +116,7 @@ class MyHomePage extends StatefulWidget {
     }
   }
 
-  ///////////// LISTA ////////////////////////flu
+  ///////////// LISTA ////////////////////////
   _list() => Expanded(
     child: Card(
       margin: EdgeInsets.fromLTRB(10, 20, 10, 5),
@@ -147,16 +154,17 @@ class MyHomePage extends StatefulWidget {
     return Column(
       children: <Widget>[
         ListTile(
+          isThreeLine: true,
           title: Text('('+_medicionesAux[index].medidor+') '+_medicionesAux[index].direccion, style: TextStyle(color: Colors.black),),
           subtitle: Text(
             'Padrón: '+_medicionesAux[index].padron +
-                ' - Lectura Anterior: '+_medicionesAux[index].ultima_lectura.toString() +
-                ' - Actual: ' + (_medicionesAux[index].lectura.toString() == 'null'?  '0' : _medicionesAux[index].lectura.toString()),
+                ' '+(_medicionesAux[index].lectura.toString() == 'null'?  '' : ' | Lectura Actual: ' + _medicionesAux[index].lectura.toString())+
+                ' '+(_medicionesAux[index].observacion == null? '' : '| Observación: '+_medicionesAux[index].observacion),
             textScaleFactor: 1,
             style: TextStyle(color: Colors.black),
           ),
           leading: Icon(Icons.home,
-          color: _medicionesAux[index].lectura.toString() == 'null'?  Colors.grey[600] : Colors.greenAccent,size: 40,
+          color: _medicionesAux[index].lectura.toString() == 'null'?  _medicionesAux[index].observacion==null? Colors.grey[600] : Colors.yellow : Colors.greenAccent ,size: 40,
         ),
           onTap: () {
             setState(() {
@@ -167,7 +175,13 @@ class MyHomePage extends StatefulWidget {
               else
                 _ctrlLectura.text = _medicionesAux[index].lectura.toString() ;
               _ctrlDomicilio.text = _medicionesAux[index].direccion;
-              _mostrarForm = !_mostrarForm;
+              if (_medicionesAux[index].observacion == 'null')
+                _ctrlObservacion = '' ;
+              else
+                _ctrlObservacion = _medicionesAux[index].observacion;
+              if (_mostrarForm==false) {
+                _mostrarForm = !_mostrarForm;
+              }
             });
           },
         ),
@@ -202,20 +216,47 @@ class MyHomePage extends StatefulWidget {
               keyboardType: TextInputType.number,
               autofocus: true,
               onSaved: (val) {
-                setState(() {
-                  _medicion.lectura = int.parse(val);
-                  _medicion.fecha_lectura = DateTime.now().toString();
-                });
+                if (val != '' || val.isNotEmpty)
+                  setState(() {
+                      _medicion.lectura = int.parse(val);
+                      _medicion.fecha_lectura = DateTime.now().toString();
+                  });
               },
               validator: (val) {
                 if (int.parse(val) < 0)
                   return 'La lectura debe ser mayor o igual a cero.';
                 else
-                if (_medicion.ultima_lectura > int.parse(val))
-                  return 'Debe ser mayor a la última lectura' + ' (' +
-                      _medicion.ultima_lectura.toString() + ')';
-                else
-                  return null;
+                  if (_medicion.ultima_lectura > int.parse(val))
+                    return 'Debe ser mayor a la última lectura';
+                  else
+                    return null;
+              },
+            ),
+            DropdownButtonFormField<String>(
+              decoration: InputDecoration(labelText: 'Observación'),
+              value: _ctrlObservacion,
+              onChanged: (String value) {
+                // This is called when the user selects an item.
+                setState(() {
+                  _ctrlObservacion = value ;
+                });
+              },
+              icon: const Icon(
+                Icons. arrow_drop_down_circle,
+                color: Colors.green,
+                // Icon
+              ),
+              items: _listaObservaciones.map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value),
+                );
+              }).toList(),
+              onSaved: (value) {
+                setState(() {
+                  _medicion.observacion = value ;
+                  _medicion.fecha_lectura = DateTime.now().toString();
+                });
               },
             ),
             Container(
@@ -238,7 +279,7 @@ class MyHomePage extends StatefulWidget {
       var body = json.encode(medicionesList);
       var response;
       var ok = true;
-      print('*** body: ' + body);
+      // print('*** body: ' + body);
       try {
         response = await http.post(url, headers: {'Content-Type': "application/json"}, body:   body).timeout(const Duration(seconds: 5));
       } on TimeoutException catch (e) {
@@ -257,11 +298,10 @@ class MyHomePage extends StatefulWidget {
         // print("Response body: ${response.contentLength}");
         // print("response.headers: " + response.headers);
         // print("response.request: " + response.request);
-        if ( response.statusCode == 201 ) {
-          // _LimpiaBase();
+        if (response.statusCode == 201) {
+          // Se subieron con éxito las lecturas cargadas
           _descargaMediciones();
-          // mensajeExito(context, 'Éxito',
-          //     'La base de datos se ha actualizado con éxito.');
+          // mensajeExito(context, 'Éxito', 'La base de datos se ha actualizado con éxito.');
         } else {
           var _error = 'Error (' + response.statusCode.toString() + ')';
           mensajeError(context, _error, 'Ocurrió un error, intente más tarde');
@@ -269,12 +309,9 @@ class MyHomePage extends StatefulWidget {
         return response;
       }
     } else {
-      // No hay mediciones para subir, únicamente descargo las mediciones si es que hay nuevas
-      // _LimpiaBase(); // cuidado con ésto que borra toda la DB!!
+      // No hay lecturas cargadas para subir, únicamente descargo las mediciones si es que hay nuevas
       _descargaMediciones();
       _traePeriodo();
-      // mensajeExito(context, 'Éxito',
-      // 'La base de datos se ha actualizado con éxito.');
     }
   }
 
@@ -299,7 +336,7 @@ class MyHomePage extends StatefulWidget {
     if (ok == true) {
       print('***response.statusCode: ' + response.statusCode.toString());
       if (response.statusCode == 200) {
-        _LimpiaBase();
+        _LimpiaBase(); // cuidado con ésto que borra toda la DB!!
         List mediciones = json.decode(response.body);
         List<Medicion> listaMediciones = mediciones.map((map) => Medicion.fromJson(map)).toList();
         for (var medicion in listaMediciones) {
@@ -312,7 +349,8 @@ class MyHomePage extends StatefulWidget {
               fecha_lectura: null,
               direccion: medicion.direccion,
               ultima_lectura: medicion.ultima_lectura,
-              inspector: medicion.inspector
+              inspector: medicion.inspector,
+              observacion: medicion.observacion
           );
           // Grabo en la base de datos
           _insertaDescargado(_medicionObject);
@@ -376,6 +414,7 @@ class MyHomePage extends StatefulWidget {
       _ctrlDomicilio.clear();
       _ctrlLectura.clear();
       _ctrlMedidor.clear();
+      _ctrlObservacion = '';
       _medicion.id = null;
       _mostrarForm = false;
     });
@@ -391,3 +430,5 @@ class MyHomePage extends StatefulWidget {
   }
 
 }
+
+

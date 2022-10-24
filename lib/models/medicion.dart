@@ -9,10 +9,11 @@ class Medicion {
   static const colDireccion = 'direccion';
   static const colUltima = 'ultima_lectura';
   static const colInspector = 'inspector';
+  static const colObservacion = 'observacion';
 
   Medicion({this.id, this.periodo, this.padron, this.medidor, this.lectura,
             this.fecha_lectura, this.direccion, this.ultima_lectura,
-            this.inspector});
+            this.inspector, this.observacion});
 
   Medicion.fromJson(Map<String, dynamic> json) {
     id = json['id'];
@@ -24,6 +25,7 @@ class Medicion {
     direccion = json['direccion'];
     ultima_lectura = json['ultima_lectura'];
     inspector = json['inspector'];
+    observacion = json['observacion'];
   }
 
   Medicion.fromMap(Map<String, dynamic> map) {
@@ -36,6 +38,7 @@ class Medicion {
     direccion = map[colDireccion];
     ultima_lectura = map[colUltima];
     inspector = map[colInspector];
+    observacion = map[colObservacion];
   }
 
   int id;
@@ -47,6 +50,7 @@ class Medicion {
   String direccion;
   int ultima_lectura;
   int inspector;
+  String observacion;
 
   Map<String, dynamic> toJson() {
     final json =<String, dynamic>{};
@@ -59,11 +63,12 @@ class Medicion {
     json['direccion'] = this.direccion;
     json['ultima_lectura'] = this.ultima_lectura;
     json['inspector'] = this.inspector;
+    json['observacion'] = this.observacion;
     return json;
   }
 
   Map<String, dynamic> toMap() {
-    var map = <String, dynamic>{colLectura: lectura, colFecha: fecha_lectura};
+    var map = <String, dynamic>{colLectura: lectura, colFecha: fecha_lectura, colObservacion: observacion};
     if (id != null) map[colId] = id;
     return map;
   }
