@@ -223,13 +223,19 @@ class MyHomePage extends StatefulWidget {
                   });
               },
               validator: (val) {
-                if (int.parse(val) < 0)
-                  return 'La lectura debe ser mayor o igual a cero.';
-                else
-                  if (_medicion.ultima_lectura > int.parse(val))
-                    return 'Debe ser mayor a la última lectura';
+                if (val == '' || val.isEmpty)
+                  if (_ctrlObservacion == '')
+                    return 'Campo requerido.';
                   else
                     return null;
+                else
+                  if (int.parse(val) < 0)
+                    return 'La lectura debe ser mayor o igual a cero.';
+                  else
+                    if (_medicion.ultima_lectura > int.parse(val))
+                      return 'Debe ser mayor a la última lectura';
+                    else
+                      return null;
               },
             ),
             DropdownButtonFormField<String>(
