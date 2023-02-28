@@ -164,7 +164,7 @@ class MyHomePage extends StatefulWidget {
             style: TextStyle(color: Colors.black),
           ),
           leading: Icon(Icons.home,
-          color: _medicionesAux[index].lectura.toString() == 'null'?  _medicionesAux[index].observacion==null? Colors.grey[600] : Colors.yellow : Colors.greenAccent ,size: 40,
+          color: _medicionesAux[index].lectura.toString() != 'null'?  Colors.greenAccent : _medicionesAux[index].observacion==null? Colors.grey[600] : Colors.yellow ,size: 40,
         ),
           onTap: () {
             setState(() {

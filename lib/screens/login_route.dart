@@ -106,10 +106,11 @@ class _LoginRouteState extends State<LoginRoute> {
           Navigator.push(context,
               MaterialPageRoute(builder: (context) =>
                   MyHomePage(title: 'Comuna Alvear - Lecturas')));
+        } else {
+          mensajeError(context, 'Error', 'DNI o pin incorrecto');
         }
-      }
-      if (auth != true) {
-        mensajeError(context, 'Error', 'DNI o pin incorrecto');
+      } else {
+        mensajeError(context, 'Error', 'jsonData.statusCode == '+jsonData.body);
       }
     // Si no se logra conectar al servidor, hago el logIn con los datos guardados, por si se desloguea por error y no tiene conexión
     } else {

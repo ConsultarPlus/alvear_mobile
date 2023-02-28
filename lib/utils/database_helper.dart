@@ -93,7 +93,7 @@ class DatabaseHelper{
     Database db = await database;
     int lect1 = 0;
     String lect2 = '';
-    List<Map> mediciones =await db.query(Medicion.tblMedicion,where: '${Medicion.colLectura}!=? or ${Medicion.colObservacion}!=?', whereArgs: [lect1, lect2]);
+    List<Map> mediciones =await db.query(Medicion.tblMedicion,where: '${Medicion.colLectura}>=? or ${Medicion.colObservacion}!=?', whereArgs: [lect1, lect2]);
     return mediciones.length == 0
         ?[]
         :mediciones.map((e) => Medicion.fromMap(e)).toList();
